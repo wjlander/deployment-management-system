@@ -8,7 +8,7 @@ set -e  # Exit on any error
 # Configuration
 DOMAIN="your-domain.com"  # Change this to your actual domain
 APP_USER="$SUDO_USER"
-APP_DIR="/home/$APP_USER/deployment-app"
+APP_DIR="/var/www/deployment-app"
 SERVICE_NAME="deployment-system"
 
 # Colors for output
@@ -88,7 +88,8 @@ fi
 
 echo -e "${BLUE}📁 Step 6: Setting up application directory...${NC}"
 mkdir -p $APP_DIR
-chown -R $APP_USER:$APP_USER $APP_DIR
+chown -R $APP_USER:www-data $APP_DIR
+chmod -R 755 $APP_DIR
 
 echo -e "${BLUE}📥 Step 7: Setting up application files...${NC}"
 # Copy application files to the app directory
@@ -257,37 +258,45 @@ fi
 echo -e "${BLUE}📝 Step 16: Creating management scripts...${NC}"
 
 # Create update script
-cat > /home/$APP_USER/update-app.sh << SCRIPT_EOF
+cat > /usr/local/bin/update-deployment << SCRIPT_EOF
 #!/bin/bash
 
 # Update script for deployment management system
-# Run as $APP_USER user
+# Run as root or with sudo
 
 APP_DIR="$APP_DIR"
+APP_USER="$APP_USER"
+
+echo "🔄 Updating Deployment Management System..."
+echo "=========================================="
+
 cd \$APP_DIR
 
 echo "📥 Pulling latest changes..."
 if [ -d ".git" ]; then
-    git pull origin main
+    sudo -u \$APP_USER git pull origin main
 else
     echo "Not a git repository - manual update required"
 fi
 
 echo "📦 Installing dependencies..."
-npm install
+sudo -u \$APP_USER npm install
 
 echo "🔨 Building application..."
-npm run build
+sudo -u \$APP_USER npm run build
+
+echo "🔧 Setting permissions..."
+chown -R \$APP_USER:www-data \$APP_DIR/dist
+chmod -R 755 \$APP_DIR/dist
 
 echo "🔄 Restarting nginx..."
-sudo systemctl reload nginx
+systemctl reload nginx
 
 echo "✅ Application updated successfully!"
 echo "🌐 Visit: https://$DOMAIN"
 SCRIPT_EOF
 
-chown $APP_USER:$APP_USER /home/$APP_USER/update-app.sh
-chmod +x /home/$APP_USER/update-app.sh
+chmod +x /usr/local/bin/update-deployment
 
 # Create status check script
 cat > /usr/local/bin/deployment-status << 'STATUS_EOF'
@@ -336,7 +345,6 @@ STATUS_EOF
 chmod +x /usr/local/bin/deployment-status
 
 # Add deployapp user to sudo for nginx operations
-echo "$APP_USER ALL=(ALL) NOPASSWD: /usr/bin/systemctl reload nginx, /usr/bin/systemctl restart nginx, /usr/bin/systemctl status nginx" > /etc/sudoers.d/deployapp
 
 echo -e "${BLUE}🔧 Step 17: Setting up log rotation...${NC}"
 cat > /etc/logrotate.d/deployment-system << 'LOGROTATE_EOF'
