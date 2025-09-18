@@ -676,6 +676,53 @@ const DeploymentManagementSystem = () => {
     a.click();
   };
 
+  const renderLoginPage = () => (
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="bg-white p-8 rounded-lg shadow-md w-96">
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">KFC Deployment System</h1>
+          <p className="text-gray-600">Please login to continue</p>
+        </div>
+        
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+            <input
+              type="text"
+              value={loginForm.username}
+              onChange={(e) => setLoginForm(prev => ({ ...prev, username: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <input
+              type="password"
+              value={loginForm.password}
+              onChange={(e) => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          
+          {loginError && (
+            <div className="text-red-600 text-sm">{loginError}</div>
+          )}
+          
+          <button
+            type="submit"
+            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+          >
+            <LogIn className="w-4 h-4" />
+            Login
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+
   const renderDateSelector = () => {
     const dates = Object.keys(deploymentsByDate).sort();
     
@@ -779,68 +826,6 @@ const DeploymentManagementSystem = () => {
             </button>
           );
         })}
-      </div>
-    </div>
-  );
-
-  // Login page render
-  const renderLoginPage = () => (
-    <div className="min-h-screen bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center p-6">
-      <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="bg-red-600 text-white rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-            <LogIn className="w-8 h-8" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-800">KFC Login</h1>
-          <p className="text-gray-600 mt-2">Deployment Management System</p>
-        </div>
-        
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Username
-            </label>
-            <input
-              type="text"
-              value={loginForm.username}
-              onChange={(e) => setLoginForm(prev => ({ ...prev, username: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-              placeholder="Enter username"
-              required
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password
-            </label>
-            <input
-              type="password"
-              value={loginForm.password}
-              onChange={(e) => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-              placeholder="Enter password"
-              required
-            />
-          </div>
-          
-          {loginError && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
-              {loginError}
-            </div>
-          )}
-          
-          <button
-            type="submit"
-            className="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors font-medium"
-          >
-            Sign In
-          </button>
-        </form>
-        
-        <div className="mt-6 text-center text-xs text-gray-500">
-          Authorized personnel only
-        </div>
       </div>
     </div>
   );
@@ -1410,9 +1395,25 @@ const DeploymentManagementSystem = () => {
     </div>
   );
 
+  // Show login page if not authenticated
+  if (!isAuthenticated) {
+    return renderLoginPage();
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-800">KFC Deployment Management System</h1>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            Logout
+          </button>
+        </div>
+        
         {renderNavigation()}
         
         {currentPage === 'deployment' && renderDeploymentPage()}
