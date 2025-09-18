@@ -431,7 +431,14 @@ const DeploymentManagementSystem = () => {
           forecast: forecast.replace('£', ''),
           actual: actual.replace('£', ''),
           lastYear: lastYear.replace('£', ''),
-          forecastCount: parts[4] || '0',
+          fore
+        }
+        )
+      }
+    }
+    )
+  }
+}castCount: parts[4] || '0',
           actualCount: parts[5] || '0',
           lastYearCount: parts[6] || '0'
         });
