@@ -375,7 +375,7 @@ const DeploymentManagementSystem = () => {
         parsedToday: [],
         parsedLastWeek: []
       }
-    });
+    }));
   };
 
   const exportToPDF = () => {
