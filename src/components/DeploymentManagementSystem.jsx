@@ -378,127 +378,6 @@ const DeploymentManagementSystem = () => {
     }));
   };
 
-  const clearCurrentDeployments = () => {
-    if (window.confirm(`Are you sure you want to clear all deployments for ${selectedDate}? This action cannot be undone.`)) {
-      setDeploymentsByDate(prev => ({
-        ...prev,
-        [selectedDate]: []
-      }));
-    }
-  };
-
-  const clearAllStaff = () => {
-    if (window.confirm('Are you sure you want to delete all staff members? This will also remove them from all deployments. This action cannot be undone.')) {
-      setStaff([]);
-      // Clear all deployments since staff will be gone
-      setDeploymentsByDate(prev => {
-        const updated = { ...prev };
-        Object.keys(updated).forEach(date => {
-          updated[date] = [];
-        });
-        return updated;
-      });
-    }
-  };
-
-  const downloadStaffTemplate = () => {
-    const csvContent = 'Name,Under 18\nJohn Smith,false\nJane Doe,true\nMike Johnson,false';
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'staff-template.csv';
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const exportStaffCSV = () => {
-    const csvHeader = 'Name,Under 18\n';
-    const csvContent = staff.map(member => 
-      `"${member.name}",${member.isUnder18}`
-    ).join('\n');
-    
-    const blob = new Blob([csvHeader + csvContent], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `staff-export-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleStaffCSVUpload = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const csv = e.target.result;
-        const lines = csv.split('\n').filter(line => line.trim());
-        
-        // Skip header row
-        const dataLines = lines.slice(1);
-        
-        const newStaff = dataLines.map((line, index) => {
-          // Handle CSV parsing with potential commas in names
-          const match = line.match(/^"?([^"]*)"?,\s*(true|false|TRUE|FALSE|True|False|1|0)$/);
-          if (!match) {
-            throw new Error(`Invalid format on line ${index + 2}: ${line}`);
-          }
-          
-          const name = match[1].trim();
-          const isUnder18String = match[2].toLowerCase();
-          const isUnder18 = isUnder18String === 'true' || isUnder18String === '1';
-          
-          if (!name) {
-            throw new Error(`Empty name on line ${index + 2}`);
-          }
-          
-          return {
-            id: Date.now() + index,
-            name,
-            isUnder18
-          };
-        });
-        
-        if (newStaff.length === 0) {
-          alert('No valid staff data found in the CSV file.');
-          return;
-        }
-        
-        // Ask user if they want to replace or append
-        const replace = window.confirm(
-          `Found ${newStaff.length} staff members in the CSV file.\n\n` +
-          'Click OK to REPLACE all existing staff, or Cancel to ADD to existing staff.'
-        );
-        
-        if (replace) {
-          setStaff(newStaff);
-          // Clear all deployments since staff IDs will change
-          setDeploymentsByDate(prev => {
-            const updated = { ...prev };
-            Object.keys(updated).forEach(date => {
-              updated[date] = [];
-            });
-            return updated;
-          });
-        } else {
-          setStaff(prev => [...prev, ...newStaff]);
-        }
-        
-        alert(`Successfully imported ${newStaff.length} staff members!`);
-        
-      } catch (error) {
-        alert(`Error parsing CSV file: ${error.message}\n\nPlease check the file format and try again.`);
-      }
-    };
-    
-    reader.readAsText(file);
-    // Reset the input so the same file can be uploaded again
-    event.target.value = '';
-  };
-
   const exportToPDF = () => {
     const printWindow = window.open('', '_blank');
     
@@ -719,13 +598,6 @@ const DeploymentManagementSystem = () => {
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-3xl font-bold text-gray-800">Deployment for {selectedDate}</h1>
           <div className="flex gap-2">
-            <button
-              onClick={clearCurrentDeployments}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-            >
-              <Trash2 className="w-4 h-4" />
-              Clear All
-            </button>
             <button
               onClick={exportToPDF}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -970,50 +842,6 @@ const DeploymentManagementSystem = () => {
         <div className="flex items-center gap-2 mb-4">
           <Users className="w-5 h-5 text-blue-600" />
           <h2 className="text-xl font-semibold text-gray-800">Staff Management</h2>
-          <div className="ml-auto flex gap-2">
-            <button
-              onClick={downloadStaffTemplate}
-              className="flex items-center gap-2 px-3 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm"
-            >
-              <Download className="w-4 h-4" />
-              Template
-            </button>
-            <button
-              onClick={exportStaffCSV}
-              className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
-            >
-              <Download className="w-4 h-4" />
-              Export CSV
-            </button>
-            <button
-              onClick={clearAllStaff}
-              className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm"
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete All
-            </button>
-          </div>
-        </div>
-
-        <div className="mb-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-          <div className="flex items-center gap-2 mb-2">
-            <Users className="w-4 h-4 text-yellow-600" />
-            <span className="text-sm font-medium text-yellow-800">Bulk Import Staff</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <input
-              type="file"
-              accept=".csv"
-              onChange={handleStaffCSVUpload}
-              className="text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-            />
-            <span className="text-sm text-gray-600">
-              Upload CSV file with Name and Under 18 columns
-            </span>
-          </div>
-          <div className="mt-2 text-xs text-gray-500">
-            Format: Name,Under 18 (true/false). Download template for correct format.
-          </div>
         </div>
 
         <div className="mb-6 p-4 bg-blue-50 rounded-lg">
@@ -1074,35 +902,15 @@ const DeploymentManagementSystem = () => {
 
   const renderForecastPage = () => (
     <div className="space-y-6">
-      {renderDateSelector()}
-      
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex items-center gap-2 mb-4">
           <TrendingUp className="w-5 h-5 text-green-600" />
-          <h2 className="text-xl font-semibold text-gray-800">Sales Forecast Data - {selectedDate}</h2>
-        </div>
-
-        <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-blue-800">
-              <strong>Current Date:</strong> {selectedDate}
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={clearSalesData}
-                className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
-              >
-                Clear Data
-              </button>
-            </div>
-          </div>
+          <h2 className="text-xl font-semibold text-gray-800">Sales Forecast Data</h2>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Today's Data ({selectedDate})
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Today's Data</label>
             <textarea
               value={currentSalesData.todayData}
               onChange={(e) => updateSalesData('todayData', e.target.value)}
@@ -1112,9 +920,7 @@ const DeploymentManagementSystem = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Last Week Data (Same day last week)
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Last Week Data</label>
             <textarea
               value={currentSalesData.lastWeekData}
               onChange={(e) => updateSalesData('lastWeekData', e.target.value)}
@@ -1135,9 +941,6 @@ const DeploymentManagementSystem = () => {
 
         {currentSalesData.parsedToday.length > 0 && (
           <div className="overflow-x-auto">
-            <div className="mb-2 text-sm text-gray-600">
-              Showing {currentSalesData.parsedToday.length} time periods for {selectedDate}
-            </div>
             <table className="w-full border-collapse border border-gray-300">
               <thead>
                 <tr className="bg-gray-50">
