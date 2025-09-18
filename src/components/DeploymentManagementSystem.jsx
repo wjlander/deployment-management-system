@@ -438,7 +438,7 @@ const DeploymentManagementSystem = () => {
     }
     )
   }
-}castCount: parts[4] || '0',
+          forecastCount: parts[4] || '0',
           actualCount: parts[5] || '0',
           lastYearCount: parts[6] || '0'
         });
