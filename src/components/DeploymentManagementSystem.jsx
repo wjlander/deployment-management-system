@@ -63,6 +63,24 @@ const DeploymentManagementSystem = () => {
 
   const [replaceExistingStaff, setReplaceExistingStaff] = useState(false);
 
+  // Position management state
+  const [positions, setPositions] = useState([
+    { id: 1, name: 'DT', area: 'DT' },
+    { id: 2, name: 'DT2', area: 'DT' },
+    { id: 3, name: 'Cook', area: 'Cooks' },
+    { id: 4, name: 'Cook2', area: 'Cooks' },
+    { id: 5, name: 'Burgers', area: 'Cooks' },
+    { id: 6, name: 'Fries', area: 'Cooks' },
+    { id: 7, name: 'Chick', area: 'Cooks' },
+    { id: 8, name: 'Rst', area: 'Front' },
+    { id: 9, name: 'Lobby', area: 'Lobby' },
+    { id: 10, name: 'Front', area: 'Front' },
+    { id: 11, name: 'Mid', area: 'Mid' },
+    { id: 12, name: 'Transfer', area: 'Float / Bottlenecks' },
+    { id: 13, name: 'T1', area: 'Front' }
+  ]);
+
+  const [newPosition, setNewPosition] = useState({ name: '', area: '' });
   const currentDeployments = deploymentsByDate[selectedDate] || [];
   const currentShiftInfo = shiftInfoByDate[selectedDate] || {
     date: selectedDate,
@@ -80,9 +98,9 @@ const DeploymentManagementSystem = () => {
     parsedToday: [],
     parsedLastWeek: []
   };
-  const positions = ['DT', 'DT2', 'Cook', 'Cook2', 'Burgers', 'Fries', 'Chick', 'Rst', 'Lobby', 'Front', 'Mid', 'Transfer', 'T1'];
+  
   const packPositions = ['DT Pack', 'Rst Pack', 'Deliv Pack'];
-  const secondaryPositions = [...positions, ...packPositions];
+  const secondaryPositions = [...positions.map(p => p.name), ...packPositions];
   const areas = ['Cooks', 'DT', 'Front', 'Mid', 'Lobby', 'Pck Mid', 'Float / Bottlenecks', 'Table Service / Lobby'];
   const cleaningAreas = ['Lobby / Toilets', 'Front', 'Staff Room / Toilet', 'Kitchen'];
 
@@ -91,10 +109,11 @@ const DeploymentManagementSystem = () => {
       staff,
       deploymentsByDate,
       shiftInfoByDate,
-      salesDataByDate
+      salesDataByDate,
+      positions
     };
     localStorage.setItem('deploymentData', JSON.stringify(data));
-  }, [staff, deploymentsByDate, shiftInfoByDate, salesDataByDate]);
+  }, [staff, deploymentsByDate, shiftInfoByDate, salesDataByDate, positions]);
 
   useEffect(() => {
     const savedData = localStorage.getItem('deploymentData');
@@ -105,6 +124,7 @@ const DeploymentManagementSystem = () => {
         if (parsed.deploymentsByDate) setDeploymentsByDate(parsed.deploymentsByDate);
         if (parsed.shiftInfoByDate) setShiftInfoByDate(parsed.shiftInfoByDate);
         if (parsed.salesDataByDate) setSalesDataByDate(parsed.salesDataByDate);
+        if (parsed.positions) setPositions(parsed.positions);
       } catch (e) {
         console.error('Failed to load saved data:', e);
       }
@@ -490,6 +510,31 @@ const DeploymentManagementSystem = () => {
     event.target.value = ''; // Reset file input
   };
 
+  const addPosition = () => {
+    if (newPosition.name && newPosition.area) {
+      const position = {
+        id: Date.now(),
+        name: newPosition.name,
+        area: newPosition.area
+      };
+      setPositions(prev => [...prev, position]);
+      setNewPosition({ name: '', area: '' });
+    }
+  };
+
+  const removePosition = (id) => {
+    setPositions(prev => prev.filter(p => p.id !== id));
+  };
+
+  const handlePositionChange = (positionName) => {
+    const position = positions.find(p => p.name === positionName);
+    setNewDeployment(prev => ({
+      ...prev,
+      position: positionName,
+      area: position ? position.area : prev.area
+    }));
+  };
+
   const exportToPDF = () => {
     const printWindow = window.open('', '_blank');
     
@@ -680,7 +725,8 @@ const DeploymentManagementSystem = () => {
         {[
           { id: 'deployment', label: 'Deployment', icon: Calendar },
           { id: 'staff', label: 'Staff Management', icon: Users },
-          { id: 'forecast', label: 'Sales Forecast', icon: TrendingUp }
+          { id: 'forecast', label: 'Sales Forecast', icon: TrendingUp },
+          { id: 'positions', label: 'Position Management', icon: Settings }
         ].map(({ id, label, icon: Icon }) => {
           const isActive = currentPage === id;
           const buttonClass = isActive
@@ -799,12 +845,12 @@ const DeploymentManagementSystem = () => {
             </select>
             <select
               value={newDeployment.position}
-              onChange={(e) => setNewDeployment(prev => ({ ...prev, position: e.target.value }))}
+              onChange={(e) => handlePositionChange(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-md"
             >
               <option value="">Select Position</option>
               {positions.map(pos => (
-                <option key={pos} value={pos}>{pos}</option>
+                <option key={pos.id} value={pos.name}>{pos.name}</option>
               ))}
             </select>
             <input
@@ -827,8 +873,8 @@ const DeploymentManagementSystem = () => {
               className="px-3 py-2 border border-gray-300 rounded-md"
             >
               <option value="">Secondary Position</option>
-              {secondaryPositions.map(pos => (
-                <option key={pos} value={pos}>{pos}</option>
+              {secondaryPositions.map((pos, index) => (
+                <option key={index} value={pos}>{pos}</option>
               ))}
             </select>
             <select
@@ -1162,6 +1208,111 @@ const DeploymentManagementSystem = () => {
     </div>
   );
 
+  const renderPositionsPage = () => (
+    <div className="space-y-6">
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Settings className="w-5 h-5 text-purple-600" />
+          <h2 className="text-xl font-semibold text-gray-800">Position Management</h2>
+        </div>
+
+        <div className="mb-6 p-4 bg-purple-50 rounded-lg">
+          <div className="flex gap-3 items-end">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Position Name</label>
+              <input
+                type="text"
+                value={newPosition.name}
+                onChange={(e) => setNewPosition(prev => ({ ...prev, name: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                placeholder="Enter position name"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Area</label>
+              <select
+                value={newPosition.area}
+                onChange={(e) => setNewPosition(prev => ({ ...prev, area: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              >
+                <option value="">Select Area</option>
+                {areas.map(area => (
+                  <option key={area} value={area}>{area}</option>
+                ))}
+              </select>
+            </div>
+            <button
+              onClick={addPosition}
+              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+            >
+              <Plus className="w-4 h-4" />
+              Add Position
+            </button>
+          </div>
+        </div>
+
+        <div className="mb-6 p-4 bg-red-50 rounded-lg border border-red-200">
+          <div className="flex items-center gap-2 mb-3">
+            <Trash2 className="w-4 h-4 text-red-600" />
+            <h3 className="text-sm font-medium text-red-800">Bulk Operations</h3>
+          </div>
+          <button
+            onClick={() => {
+              if (window.confirm('Are you sure you want to delete ALL positions? This may affect existing deployments.')) {
+                setPositions([]);
+              }
+            }}
+            className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm"
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete All Positions
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {areas.map(area => {
+            const areaPositions = positions.filter(p => p.area === area);
+            if (areaPositions.length === 0) return null;
+            
+            return (
+              <div key={area} className="bg-gray-50 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                  <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                    {area}
+                  </span>
+                  <span className="text-sm text-gray-500">({areaPositions.length} positions)</span>
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {areaPositions.map(position => (
+                    <div key={position.id} className="bg-white rounded-lg p-3 flex justify-between items-center shadow-sm">
+                      <div>
+                        <div className="font-medium text-gray-800">{position.name}</div>
+                        <div className="text-sm text-gray-500">{position.area}</div>
+                      </div>
+                      <button
+                        onClick={() => removePosition(position.id)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {positions.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            <Settings className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+            <p>No positions configured. Add your first position above.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="max-w-7xl mx-auto">
@@ -1170,6 +1321,7 @@ const DeploymentManagementSystem = () => {
         {currentPage === 'deployment' && renderDeploymentPage()}
         {currentPage === 'staff' && renderStaffPage()}
         {currentPage === 'forecast' && renderForecastPage()}
+        {currentPage === 'positions' && renderPositionsPage()}
 
         {showNewDateModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
