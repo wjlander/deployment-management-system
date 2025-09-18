@@ -5,15 +5,7 @@ import { supabase } from '../lib/supabase';
 const DeploymentManagementSystem = () => {
   const [currentPage, setCurrentPage] = useState('deployment');
   const [selectedDate, setSelectedDate] = useState('08/09/2025');
-  const [staff, setStaff] = useState([
-    { id: 1, name: 'Will Lander', isUnder18: false },
-    { id: 2, name: 'Shane Whiteley', isUnder18: false },
-    { id: 3, name: 'Craig Lloyd', isUnder18: false },
-    { id: 4, name: 'Evan Anderson', isUnder18: true },
-    { id: 5, name: 'Max Lloyd', isUnder18: false },
-    { id: 6, name: 'Jessica Ford', isUnder18: false },
-    { id: 7, name: 'Sam Edwards', isUnder18: false }
-  ]);
+  const [staff, setStaff] = useState([]);
 
   const [positions, setPositions] = useState({
     position: ['DT', 'DT2', 'Cook', 'Cook2', 'Burgers', 'Fries', 'Chick', 'Rst', 'Lobby', 'Front', 'Mid', 'Transfer', 'T1'],
@@ -23,29 +15,10 @@ const DeploymentManagementSystem = () => {
   });
 
   // Store deployments by date
-  const [deploymentsByDate, setDeploymentsByDate] = useState({
-    '08/09/2025': [
-      { id: 1, staffId: 1, startTime: '15:00', endTime: '00:00', position: 'DT', secondary: 'DT Pack', area: 'Float / Bottlenecks', cleaning: 'Lobby / Toilets', breakMinutes: 30 },
-      { id: 2, staffId: 2, startTime: '16:00', endTime: '00:00', position: 'Cook', secondary: 'Transfer', area: 'Cooks', cleaning: '', breakMinutes: 30 },
-      { id: 3, staffId: 3, startTime: '17:00', endTime: '00:00', position: 'DT2', secondary: 'Fries', area: 'Cooks', cleaning: '', breakMinutes: 30 },
-      { id: 4, staffId: 4, startTime: '17:00', endTime: '23:30', position: 'Burgers', secondary: 'Chick', area: 'Pck Mid', cleaning: '', breakMinutes: 30 },
-      { id: 5, staffId: 5, startTime: '17:00', endTime: '21:00', position: 'Rst', secondary: 'Rst Pack', area: 'Table Service / Lobby', cleaning: '', breakMinutes: 15 },
-      { id: 6, staffId: 6, startTime: '18:00', endTime: '23:00', position: 'DT', secondary: 'Pres', area: 'Lobby', cleaning: 'Front', breakMinutes: 15 },
-      { id: 7, staffId: 7, startTime: '12:00', endTime: '20:00', position: 'Chick', secondary: 'Deliv Pack', area: 'Float / Bottlenecks', cleaning: '', breakMinutes: 30 }
-    ]
-  });
+  const [deploymentsByDate, setDeploymentsByDate] = useState({});
 
   // Store shift info by date
-  const [shiftInfoByDate, setShiftInfoByDate] = useState({
-    '08/09/2025': {
-      date: '08/09/2025',
-      forecast: '£4,100.00',
-      dayShiftForecast: '£2,500.00',
-      nightShiftForecast: '£1,600.00',
-      weather: 'Warm and Dry',
-      notes: 'Lets really go for upselling today guys and lets get a fantastic DT Time. Mention the Survey and lets leave the customers with a fantastic experience'
-    }
-  });
+  const [shiftInfoByDate, setShiftInfoByDate] = useState({});
 
   const [salesData, setSalesData] = useState({
     todayData: '',
@@ -110,22 +83,21 @@ const DeploymentManagementSystem = () => {
   }, []);
 
   const loadFromSupabase = async () => {
-    try {
+        .select('id, name, is_under_18');
       setSaveStatus('Loading...');
       
       // Load staff
-      const { data: staffData } = await supabase.from('staff').select('*');
+      const { error: staffError } = await supabase
       if (staffData && staffData.length > 0) {
-        const formattedStaff = staffData.map(s => ({
-          id: s.id,
+      const { data: staffData, error: staffError } = await supabase
           name: s.name,
           isUnder18: s.is_under_18
-        }));
+        })), { onConflict: 'id' });
         setStaff(formattedStaff);
       }
 
       // Load positions
-      const { data: positionsData } = await supabase.from('positions').select('*');
+      const { data: deploymentsData, error: deploymentsError } = await supabase
       if (positionsData && positionsData.length > 0) {
         const groupedPositions = {
           position: [],
@@ -141,7 +113,7 @@ const DeploymentManagementSystem = () => {
         });
         
         setPositions(groupedPositions);
-      }
+        .select('id, date, staff_id, start_time, end_time, position, secondary, area, cleaning, break_minutes');
 
       // Load deployments
       const { data: deploymentsData } = await supabase.from('deployments').select('*');
@@ -164,10 +136,10 @@ const DeploymentManagementSystem = () => {
           });
         });
         setDeploymentsByDate(groupedDeployments);
-      }
+        .select('date, forecast, day_shift_forecast, night_shift_forecast, weather, notes');
 
       // Load shift info
-      const { data: shiftData } = await supabase.from('shift_info').select('*');
+      const { data: shiftData, error: shiftError } = await supabase
       if (shiftData && shiftData.length > 0) {
         const groupedShiftInfo = {};
         shiftData.forEach(s => {
@@ -251,10 +223,9 @@ const DeploymentManagementSystem = () => {
       Object.entries(deploymentsByDate).forEach(([date, deployments]) => {
         deployments.forEach(d => {
           deploymentsToSave.push({
-            id: d.id,
+      const { error: deploymentsError } = await supabase
             date,
-            staff_id: d.staffId,
-            start_time: d.startTime,
+        .upsert(currentDeployments.map(d => ({
             end_time: d.endTime,
             position: d.position,
             secondary: d.secondary || '',
@@ -264,7 +235,7 @@ const DeploymentManagementSystem = () => {
           });
         });
       });
-      if (deploymentsToSave.length > 0) {
+        })), { onConflict: 'id' });
         await supabase.from('deployments').insert(deploymentsToSave);
       }
 
@@ -276,16 +247,16 @@ const DeploymentManagementSystem = () => {
         day_shift_forecast: s.dayShiftForecast,
         night_shift_forecast: s.nightShiftForecast,
         weather: s.weather,
-        notes: s.notes
+      const { error: shiftError } = await supabase
       }));
-      if (shiftInfoToSave.length > 0) {
+        .upsert({
         await supabase.from('shift_info').insert(shiftInfoToSave);
       }
 
       // Save sales data
       await supabase.from('sales_data').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       await supabase.from('sales_data').insert({
-        today_data: salesData.todayData,
+        }, { onConflict: 'date' });
         last_week_data: salesData.lastWeekData,
         last_year_data: salesData.lastYearData
       });
@@ -355,7 +326,7 @@ const DeploymentManagementSystem = () => {
   const addStaff = () => {
     if (newStaff.name) {
       const newStaffMember = {
-        id: Date.now(),
+        id: crypto.randomUUID(),
         name: newStaff.name,
         isUnder18: newStaff.isUnder18
       };
@@ -378,14 +349,14 @@ const DeploymentManagementSystem = () => {
 
   const addDeployment = () => {
     if (newDeployment.staffId && newDeployment.startTime && newDeployment.endTime) {
-      const staffMember = staff.find(s => s.id === parseInt(newDeployment.staffId));
+      const staffMember = staff.find(s => s.id === newDeployment.staffId);
       const workHours = calculateWorkHours(newDeployment.startTime, newDeployment.endTime);
       const breakTime = calculateBreakTime(staffMember, workHours);
       
       const deployment = {
-        id: Date.now(),
+        id: crypto.randomUUID(),
         ...newDeployment,
-        staffId: parseInt(newDeployment.staffId),
+        staffId: newDeployment.staffId,
         breakMinutes: breakTime,
         position: newDeployment.position || ''
       };
@@ -475,7 +446,7 @@ const DeploymentManagementSystem = () => {
     if (fromDate && fromDate !== selectedDate && deploymentsByDate[fromDate]) {
       const deploymentsToCopy = deploymentsByDate[fromDate].map(d => ({
         ...d,
-        id: Date.now() + Math.random()
+        id: crypto.randomUUID()
       }));
       
       setDeploymentsByDate(prev => ({
