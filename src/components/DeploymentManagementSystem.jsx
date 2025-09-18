@@ -680,20 +680,20 @@ const DeploymentManagementSystem = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Secondary</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Area</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Break</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cleaning</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          <table className="w-full border-collapse border border-gray-300">
+            <thead>
+              <tr className="bg-gray-50">
+                <th className="border border-gray-300 px-4 py-2 text-left">Staff</th>
+                <th className="border border-gray-300 px-4 py-2 text-left">Time</th>
+                <th className="border border-gray-300 px-4 py-2 text-left">Position</th>
+                <th className="border border-gray-300 px-4 py-2 text-left">Secondary</th>
+                <th className="border border-gray-300 px-4 py-2 text-left">Area</th>
+                <th className="border border-gray-300 px-4 py-2 text-left">Break</th>
+                <th className="border border-gray-300 px-4 py-2 text-left">Cleaning</th>
+                <th className="border border-gray-300 px-4 py-2 text-left">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody>
               {currentDeployments.map(deployment => {
                 const staffMember = staff.find(s => s.id === deployment.staffId);
                 const workHours = calculateWorkHours(deployment.startTime, deployment.endTime);
@@ -701,49 +701,55 @@ const DeploymentManagementSystem = () => {
                 
                 return (
                   <tr key={deployment.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="text-sm font-medium text-gray-900">
-                          {getStaffName(deployment.staffId)}
-                          {staffMember?.isUnder18 && (
-                            <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                              U18
-                            </span>
-                          )}
-                        </div>
+                    <td className="border border-gray-300 px-4 py-2">
+                      <div className="flex items-center gap-2">
+                        <span>{getStaffName(deployment.staffId)}</span>
+                        {staffMember?.isUnder18 && (
+                          <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">
+                            U18
+                          </span>
+                        )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {deployment.startTime} - {deployment.endTime}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {workHours.toFixed(1)} hours
+                    <td className="border border-gray-300 px-4 py-2">
+                      <div>
+                        <div className="font-medium">{deployment.startTime} - {deployment.endTime}</div>
+                        <div className="text-sm text-gray-500">{workHours.toFixed(1)}h</div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    <td className="border border-gray-300 px-4 py-2">
+                      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
                         {deployment.position}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {deployment.secondary}
+                    <td className="border border-gray-300 px-4 py-2">
+                      {deployment.secondary && (
+                        <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
+                          {deployment.secondary}
+                        </span>
+                      )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {deployment.area}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getBreakTimeClass(breakTime)}`}>
-                        {breakTime} min
+                    <td className="border border-gray-300 px-4 py-2">
+                      <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-sm">
+                        {deployment.area}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {deployment.cleaning}
+                    <td className="border border-gray-300 px-4 py-2">
+                      <span className={`px-2 py-1 rounded-full text-sm ${getBreakTimeClass(breakTime)}`}>
+                        {breakTime}min
+                      </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="border border-gray-300 px-4 py-2">
+                      {deployment.cleaning && (
+                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                          {deployment.cleaning}
+                        </span>
+                      )}
+                    </td>
+                    <td className="border border-gray-300 px-4 py-2">
                       <button
                         onClick={() => removeDeployment(deployment.id)}
-                        className="text-red-600 hover:text-red-900"
+                        className="text-red-600 hover:text-red-800"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -753,12 +759,6 @@ const DeploymentManagementSystem = () => {
               })}
             </tbody>
           </table>
-          
-          {currentDeployments.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              No deployments scheduled for this date. Add some deployments above.
-            </div>
-          )}
         </div>
       </div>
     </div>
@@ -773,26 +773,30 @@ const DeploymentManagementSystem = () => {
         </div>
 
         <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-          <div className="flex gap-3">
-            <input
-              type="text"
-              placeholder="Staff Name"
-              value={newStaff.name}
-              onChange={(e) => setNewStaff(prev => ({ ...prev, name: e.target.value }))}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
-            />
-            <label className="flex items-center gap-2">
+          <div className="flex gap-3 items-end">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Staff Name</label>
+              <input
+                type="text"
+                value={newStaff.name}
+                onChange={(e) => setNewStaff(prev => ({ ...prev, name: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                placeholder="Enter staff name"
+              />
+            </div>
+            <div className="flex items-center gap-2">
               <input
                 type="checkbox"
+                id="isUnder18"
                 checked={newStaff.isUnder18}
                 onChange={(e) => setNewStaff(prev => ({ ...prev, isUnder18: e.target.checked }))}
                 className="rounded"
               />
-              <span className="text-sm text-gray-700">Under 18</span>
-            </label>
+              <label htmlFor="isUnder18" className="text-sm text-gray-700">Under 18</label>
+            </div>
             <button
               onClick={addStaff}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
               <Plus className="w-4 h-4" />
               Add Staff
@@ -800,44 +804,25 @@ const DeploymentManagementSystem = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {staff.map(member => (
-                <tr key={member.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{member.name}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {member.isUnder18 ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                        Under 18
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        18+
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => removeStaff(member.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {staff.map(member => (
+            <div key={member.id} className="bg-gray-50 rounded-lg p-4 flex justify-between items-center">
+              <div>
+                <div className="font-medium text-gray-800">{member.name}</div>
+                {member.isUnder18 && (
+                  <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">
+                    Under 18
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() => removeStaff(member.id)}
+                className="text-red-600 hover:text-red-800"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -857,60 +842,63 @@ const DeploymentManagementSystem = () => {
             <textarea
               value={salesData.todayData}
               onChange={(e) => setSalesData(prev => ({ ...prev, todayData: e.target.value }))}
-              placeholder="Paste today's hourly data here..."
-              className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md text-sm font-mono"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              rows={10}
+              placeholder="Paste today's sales data here..."
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Last Week's Data</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Last Week Data</label>
             <textarea
               value={salesData.lastWeekData}
               onChange={(e) => setSalesData(prev => ({ ...prev, lastWeekData: e.target.value }))}
-              placeholder="Paste last week's hourly data here..."
-              className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md text-sm font-mono"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              rows={10}
+              placeholder="Paste last week's sales data here..."
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Last Year's Data</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Last Year Data</label>
             <textarea
               value={salesData.lastYearData}
               onChange={(e) => setSalesData(prev => ({ ...prev, lastYearData: e.target.value }))}
-              placeholder="Paste last year's hourly data here..."
-              className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md text-sm font-mono"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              rows={10}
+              placeholder="Paste last year's sales data here..."
             />
           </div>
         </div>
 
         <button
           onClick={handleSalesDataParse}
-          className="mb-6 flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 mb-6"
         >
-          <Save className="w-4 h-4" />
-          Parse Data
+          <TrendingUp className="w-4 h-4" />
+          Parse Sales Data
         </button>
 
         {parsedSalesData.today.length > 0 && (
           <div className="overflow-x-auto">
-            <table className="min-w-full bg-white">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Today Forecast</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Today Actual</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Week</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Year</th>
+            <table className="w-full border-collapse border border-gray-300">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="border border-gray-300 px-4 py-2 text-left">Time</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left">Today Forecast</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left">Today Actual</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left">Last Week</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left">Last Year</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody>
                 {parsedSalesData.today.map((item, index) => (
                   <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{item.time}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">£{item.forecast}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">£{item.actual}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                    <td className="border border-gray-300 px-4 py-2 font-medium">{item.time}</td>
+                    <td className="border border-gray-300 px-4 py-2">£{item.forecast}</td>
+                    <td className="border border-gray-300 px-4 py-2">£{item.actual}</td>
+                    <td className="border border-gray-300 px-4 py-2">
                       £{parsedSalesData.lastWeek[index]?.forecast || '0.00'}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                    <td className="border border-gray-300 px-4 py-2">
                       £{parsedSalesData.lastYear[index]?.forecast || '0.00'}
                     </td>
                   </tr>
@@ -931,11 +919,11 @@ const DeploymentManagementSystem = () => {
         {currentPage === 'deployment' && renderDeploymentPage()}
         {currentPage === 'staff' && renderStaffPage()}
         {currentPage === 'forecast' && renderForecastPage()}
-        
+
         {showNewDateModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-96">
-              <h3 className="text-lg font-semibold mb-4">Add New Date</h3>
+              <h3 className="text-lg font-semibold mb-4">Create New Date</h3>
               <input
                 type="date"
                 value={newDate}
@@ -951,7 +939,7 @@ const DeploymentManagementSystem = () => {
                 </button>
                 <button
                   onClick={createNewDate}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
                 >
                   Create
                 </button>
