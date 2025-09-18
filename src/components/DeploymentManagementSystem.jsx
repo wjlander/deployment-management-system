@@ -80,7 +80,15 @@ const DeploymentManagementSystem = () => {
     { id: 13, name: 'T1', area: 'Front' }
   ]);
 
+  const [cleaningAreas, setCleaningAreas] = useState([
+    'Lobby / Toilets',
+    'Front',
+    'Staff Room / Toilet',
+    'Kitchen'
+  ]);
+
   const [newPosition, setNewPosition] = useState({ name: '', area: '' });
+  const [newCleaningArea, setNewCleaningArea] = useState('');
   const currentDeployments = deploymentsByDate[selectedDate] || [];
   const currentShiftInfo = shiftInfoByDate[selectedDate] || {
     date: selectedDate,
@@ -102,7 +110,6 @@ const DeploymentManagementSystem = () => {
   const packPositions = ['DT Pack', 'Rst Pack', 'Deliv Pack'];
   const secondaryPositions = [...positions.map(p => p.name), ...packPositions];
   const areas = ['Cooks', 'DT', 'Front', 'Mid', 'Lobby', 'Pck Mid', 'Float / Bottlenecks', 'Table Service / Lobby'];
-  const cleaningAreas = ['Lobby / Toilets', 'Front', 'Staff Room / Toilet', 'Kitchen'];
 
   useEffect(() => {
     const data = {
