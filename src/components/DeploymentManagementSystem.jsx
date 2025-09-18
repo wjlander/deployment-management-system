@@ -148,17 +148,26 @@ const DeploymentManagementSystem = () => {
       }
 
       // Load sales data
-      const { data: salesDataResult } = await supabase
+      const { data: salesDataResult, error } = await supabase
         .from('sales_data')
         .select('*')
         .limit(1)
-        .single();
-      
-      if (salesDataResult) {
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (salesDataResult !== null) {
         setSalesData({
           todayData: salesDataResult.today_data || '',
           lastWeekData: salesDataResult.last_week_data || '',
           lastYearData: salesDataResult.last_year_data || ''
+        });
+      } else {
+        // No sales data exists yet, keep default empty state
+        setSalesData({
+          todayData: '',
+          lastWeekData: '',
+          lastYearData: ''
         });
       }
 
