@@ -222,6 +222,10 @@ const DeploymentManagementSystem = () => {
         updated[date] = updated[date].filter(d => d.staffId !== id);
       });
       return updated;
+    }
+    )
+  }
+}
     });
   };
 
