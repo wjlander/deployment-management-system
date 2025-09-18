@@ -678,3 +678,290 @@ const DeploymentManagementSystem = () => {
             </button>
           </div>
         </div>
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Secondary</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Area</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Break</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cleaning</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {currentDeployments.map(deployment => {
+                const staffMember = staff.find(s => s.id === deployment.staffId);
+                const workHours = calculateWorkHours(deployment.startTime, deployment.endTime);
+                const breakTime = deployment.breakMinutes;
+                
+                return (
+                  <tr key={deployment.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="text-sm font-medium text-gray-900">
+                          {getStaffName(deployment.staffId)}
+                          {staffMember?.isUnder18 && (
+                            <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                              U18
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {deployment.startTime} - {deployment.endTime}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {workHours.toFixed(1)} hours
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {deployment.position}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {deployment.secondary}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {deployment.area}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getBreakTimeClass(breakTime)}`}>
+                        {breakTime} min
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {deployment.cleaning}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button
+                        onClick={() => removeDeployment(deployment.id)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          
+          {currentDeployments.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              No deployments scheduled for this date. Add some deployments above.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderStaffPage = () => (
+    <div className="space-y-6">
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Users className="w-5 h-5 text-blue-600" />
+          <h2 className="text-xl font-semibold text-gray-800">Staff Management</h2>
+        </div>
+
+        <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+          <div className="flex gap-3">
+            <input
+              type="text"
+              placeholder="Staff Name"
+              value={newStaff.name}
+              onChange={(e) => setNewStaff(prev => ({ ...prev, name: e.target.value }))}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
+            />
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={newStaff.isUnder18}
+                onChange={(e) => setNewStaff(prev => ({ ...prev, isUnder18: e.target.checked }))}
+                className="rounded"
+              />
+              <span className="text-sm text-gray-700">Under 18</span>
+            </label>
+            <button
+              onClick={addStaff}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              <Plus className="w-4 h-4" />
+              Add Staff
+            </button>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {staff.map(member => (
+                <tr key={member.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">{member.name}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {member.isUnder18 ? (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        Under 18
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        18+
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button
+                      onClick={() => removeStaff(member.id)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderForecastPage = () => (
+    <div className="space-y-6">
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <TrendingUp className="w-5 h-5 text-green-600" />
+          <h2 className="text-xl font-semibold text-gray-800">Sales Forecast Data</h2>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Today's Data</label>
+            <textarea
+              value={salesData.todayData}
+              onChange={(e) => setSalesData(prev => ({ ...prev, todayData: e.target.value }))}
+              placeholder="Paste today's hourly data here..."
+              className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md text-sm font-mono"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Last Week's Data</label>
+            <textarea
+              value={salesData.lastWeekData}
+              onChange={(e) => setSalesData(prev => ({ ...prev, lastWeekData: e.target.value }))}
+              placeholder="Paste last week's hourly data here..."
+              className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md text-sm font-mono"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Last Year's Data</label>
+            <textarea
+              value={salesData.lastYearData}
+              onChange={(e) => setSalesData(prev => ({ ...prev, lastYearData: e.target.value }))}
+              placeholder="Paste last year's hourly data here..."
+              className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md text-sm font-mono"
+            />
+          </div>
+        </div>
+
+        <button
+          onClick={handleSalesDataParse}
+          className="mb-6 flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+        >
+          <Save className="w-4 h-4" />
+          Parse Data
+        </button>
+
+        {parsedSalesData.today.length > 0 && (
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Today Forecast</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Today Actual</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Week</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Year</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {parsedSalesData.today.map((item, index) => (
+                  <tr key={index} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{item.time}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">£{item.forecast}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">£{item.actual}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                      £{parsedSalesData.lastWeek[index]?.forecast || '0.00'}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                      £{parsedSalesData.lastYear[index]?.forecast || '0.00'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-100 p-4">
+      <div className="max-w-7xl mx-auto">
+        {renderNavigation()}
+        
+        {currentPage === 'deployment' && renderDeploymentPage()}
+        {currentPage === 'staff' && renderStaffPage()}
+        {currentPage === 'forecast' && renderForecastPage()}
+        
+        {showNewDateModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-96">
+              <h3 className="text-lg font-semibold mb-4">Add New Date</h3>
+              <input
+                type="date"
+                value={newDate}
+                onChange={(e) => setNewDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md mb-4"
+              />
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => setShowNewDateModal(false)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={createNewDate}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Create
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default DeploymentManagementSystem;
