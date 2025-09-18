@@ -7,8 +7,8 @@ set -e  # Exit on any error
 
 # Configuration
 DOMAIN="your-domain.com"  # Change this to your actual domain
-APP_USER="deployapp"
-APP_DIR="/home/$APP_USER/app"
+APP_USER="$SUDO_USER"
+APP_DIR="/home/$APP_USER/deployment-app"
 SERVICE_NAME="deployment-system"
 
 # Colors for output
@@ -77,11 +77,13 @@ echo "Nginx version: $(nginx -v 2>&1)"
 echo "PM2 version: $(pm2 --version)"
 
 echo -e "${BLUE}👤 Step 5: Creating application user...${NC}"
-if id "$APP_USER" &>/dev/null; then
-    echo "User $APP_USER already exists"
-else
-    useradd -m -s /bin/bash $APP_USER
-    echo "Created user $APP_USER"
+echo "Using current user: $APP_USER"
+
+# Ensure user's home directory exists
+if [ ! -d "/home/$APP_USER" ]; then
+    echo "Creating home directory for $APP_USER"
+    mkdir -p "/home/$APP_USER"
+    chown $APP_USER:$APP_USER "/home/$APP_USER"
 fi
 
 echo -e "${BLUE}📁 Step 6: Setting up application directory...${NC}"
@@ -90,7 +92,8 @@ chown -R $APP_USER:$APP_USER $APP_DIR
 
 echo -e "${BLUE}📥 Step 7: Setting up application files...${NC}"
 # Copy application files to the app directory
-cp -r . $APP_DIR/
+mkdir -p $APP_DIR
+cp -r /home/project/* $APP_DIR/ 2>/dev/null || cp -r ./* $APP_DIR/
 chown -R $APP_USER:$APP_USER $APP_DIR
 
 echo -e "${BLUE}📦 Step 8: Installing application dependencies...${NC}"
@@ -215,14 +218,14 @@ fi
 echo -e "${BLUE}📝 Step 16: Creating management scripts...${NC}"
 
 # Create update script
-cat > /home/$APP_USER/update-app.sh << 'SCRIPT_EOF'
+cat > /home/$APP_USER/update-app.sh << SCRIPT_EOF
 #!/bin/bash
 
 # Update script for deployment management system
-# Run as deployapp user
+# Run as $APP_USER user
 
-APP_DIR="/home/deployapp/app"
-cd $APP_DIR
+APP_DIR="$APP_DIR"
+cd \$APP_DIR
 
 echo "📥 Pulling latest changes..."
 if [ -d ".git" ]; then
@@ -241,7 +244,7 @@ echo "🔄 Restarting nginx..."
 sudo systemctl reload nginx
 
 echo "✅ Application updated successfully!"
-echo "🌐 Visit: https://$(hostname -f)"
+echo "🌐 Visit: https://$DOMAIN"
 SCRIPT_EOF
 
 chown $APP_USER:$APP_USER /home/$APP_USER/update-app.sh
@@ -287,7 +290,7 @@ echo "🔧 Useful Commands:"
 echo "  - Check nginx status: systemctl status nginx"
 echo "  - View nginx logs: tail -f /var/log/nginx/error.log"
 echo "  - Test nginx config: nginx -t"
-echo "  - Update app: sudo -u deployapp /home/deployapp/update-app.sh"
+echo "  - Update app: sudo -u $APP_USER /home/$APP_USER/update-app.sh"
 echo "  - Renew SSL: certbot renew"
 STATUS_EOF
 
@@ -336,7 +339,7 @@ echo -e "${BLUE}📋 Next Steps:${NC}"
 echo "=============="
 echo "1. Test your deployment: https://$DOMAIN"
 echo "2. Check system status anytime: deployment-status"
-echo "3. Update application: sudo -u $APP_USER /home/$APP_USER/update-app.sh"
+echo "3. Update application: /home/$APP_USER/update-app.sh"
 echo ""
 
 echo -e "${BLUE}📁 Important Files:${NC}"
