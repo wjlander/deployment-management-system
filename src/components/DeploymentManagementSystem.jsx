@@ -876,6 +876,75 @@ const DeploymentManagementSystem = () => {
           </div>
         </div>
 
+        <div className="mb-6 p-4 bg-red-50 rounded-lg border border-red-200">
+          <div className="flex items-center gap-2 mb-3">
+            <Trash2 className="w-4 h-4 text-red-600" />
+            <h3 className="text-sm font-medium text-red-800">Bulk Operations</h3>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => {
+                if (window.confirm('Are you sure you want to delete ALL staff? This will also remove all deployments.')) {
+                  setStaff([]);
+                  setDeploymentsByDate({});
+                  setShiftInfoByDate({});
+                  setSalesDataByDate({});
+                }
+              }}
+              className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete All Staff
+            </button>
+            <button
+              onClick={downloadStaffTemplate}
+              className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+            >
+              <FileText className="w-4 h-4" />
+              Download Template
+            </button>
+            <button
+              onClick={exportStaffCSV}
+              className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
+            >
+              <Download className="w-4 h-4" />
+              Export CSV
+            </button>
+          </div>
+        </div>
+
+        <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="flex items-center gap-2 mb-3">
+            <Plus className="w-4 h-4 text-blue-600" />
+            <h3 className="text-sm font-medium text-blue-800">Import Staff from CSV</h3>
+          </div>
+          <div className="space-y-3">
+            <div>
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleCSVUpload}
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              />
+              <p className="text-xs text-gray-600 mt-1">
+                Upload a CSV file with columns: Name, Under 18 (true/false)
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="replaceStaff"
+                checked={replaceExistingStaff}
+                onChange={(e) => setReplaceExistingStaff(e.target.checked)}
+                className="rounded"
+              />
+              <label htmlFor="replaceStaff" className="text-sm text-gray-700">
+                Replace existing staff (otherwise add to current list)
+              </label>
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {staff.map(member => (
             <div key={member.id} className="bg-gray-50 rounded-lg p-4 flex justify-between items-center">
