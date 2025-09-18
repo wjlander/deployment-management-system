@@ -282,8 +282,15 @@ const DeploymentManagementSystem = () => {
     const lines = text.split('\n').filter(line => line.trim());
     const data = [];
     
-    lines.forEach(line => {
-      const parts = line.split(/\s+/);
+    lines.forEach((line, index) => {
+      // Skip header row
+      if (index === 0 && line.toLowerCase().includes('minute')) {
+        return;
+      }
+      
+      // Split by tab or multiple spaces
+      const parts = line.split(/\t|\s{2,}/).filter(part => part.trim());
+      
       if (parts.length >= 4 && parts[0].includes(':')) {
         const time = parts[0];
         const forecast = parts[1] || '£0.00';
@@ -294,7 +301,10 @@ const DeploymentManagementSystem = () => {
           time,
           forecast: forecast.replace('£', ''),
           actual: actual.replace('£', ''),
-          lastYear: lastYear.replace('£', '')
+          lastYear: lastYear.replace('£', ''),
+          forecastCount: parts[4] || '0',
+          actualCount: parts[5] || '0',
+          lastYearCount: parts[6] || '0'
         });
       }
     });
@@ -305,8 +315,7 @@ const DeploymentManagementSystem = () => {
   const handleSalesDataParse = () => {
     setParsedSalesData({
       today: parseSalesDataText(salesData.todayData),
-      lastWeek: parseSalesDataText(salesData.lastWeekData),
-      lastYear: parseSalesDataText(salesData.lastYearData)
+      lastWeek: parseSalesDataText(salesData.lastWeekData)
     });
   };
 
@@ -339,8 +348,12 @@ const DeploymentManagementSystem = () => {
         <td style="border: 1px solid #ddd; padding: 6px;">${item.time}</td>
         <td style="border: 1px solid #ddd; padding: 6px;">£${item.forecast}</td>
         <td style="border: 1px solid #ddd; padding: 6px;">£${item.actual}</td>
+        <td style="border: 1px solid #ddd; padding: 6px;">£${item.lastYear}</td>
+        <td style="border: 1px solid #ddd; padding: 6px;">${item.forecastCount}</td>
+        <td style="border: 1px solid #ddd; padding: 6px;">${item.actualCount}</td>
+        <td style="border: 1px solid #ddd; padding: 6px;">${item.lastYearCount}</td>
         <td style="border: 1px solid #ddd; padding: 6px;">£${parsedSalesData.lastWeek[index]?.forecast || '0.00'}</td>
-        <td style="border: 1px solid #ddd; padding: 6px;">£${parsedSalesData.lastYear[index]?.forecast || '0.00'}</td>
+        <td style="border: 1px solid #ddd; padding: 6px;">£${parsedSalesData.lastWeek[index]?.actual || '0.00'}</td>
       </tr>
     `).join('');
 
@@ -381,7 +394,7 @@ const DeploymentManagementSystem = () => {
             <table style="font-size: 12px;">
               <thead>
                 <tr>
-                  <th>Time</th><th>Today Forecast</th><th>Today Actual</th><th>Last Week</th><th>Last Year</th>
+                  <th>Time</th><th>Today Forecast</th><th>Today Actual</th><th>Last Year</th><th>F Count</th><th>A Count</th><th>LY Count</th><th>LW Forecast</th><th>LW Actual</th>
                 </tr>
               </thead>
               <tbody>${forecastRows}</tbody>
@@ -836,15 +849,15 @@ const DeploymentManagementSystem = () => {
           <h2 className="text-xl font-semibold text-gray-800">Sales Forecast Data</h2>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Today's Data</label>
             <textarea
               value={salesData.todayData}
               onChange={(e) => setSalesData(prev => ({ ...prev, todayData: e.target.value }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              rows={10}
-              placeholder="Paste today's sales data here..."
+              rows={15}
+              placeholder="Paste today's sales data here (tab-separated format)..."
             />
           </div>
           <div>
@@ -853,18 +866,8 @@ const DeploymentManagementSystem = () => {
               value={salesData.lastWeekData}
               onChange={(e) => setSalesData(prev => ({ ...prev, lastWeekData: e.target.value }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              rows={10}
-              placeholder="Paste last week's sales data here..."
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Last Year Data</label>
-            <textarea
-              value={salesData.lastYearData}
-              onChange={(e) => setSalesData(prev => ({ ...prev, lastYearData: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              rows={10}
-              placeholder="Paste last year's sales data here..."
+              rows={15}
+              placeholder="Paste last week's sales data here (tab-separated format)..."
             />
           </div>
         </div>
@@ -883,23 +886,31 @@ const DeploymentManagementSystem = () => {
               <thead>
                 <tr className="bg-gray-50">
                   <th className="border border-gray-300 px-4 py-2 text-left">Time</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left">Today Forecast</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left">Today Actual</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left">Last Week</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left">Last Year</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left">Today Forecast</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left">Today Actual</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left">Last Year</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left">F Count</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left">A Count</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left">LY Count</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left">LW Forecast</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left">LW Actual</th>
                 </tr>
               </thead>
               <tbody>
                 {parsedSalesData.today.map((item, index) => (
                   <tr key={index} className="hover:bg-gray-50">
-                    <td className="border border-gray-300 px-4 py-2 font-medium">{item.time}</td>
-                    <td className="border border-gray-300 px-4 py-2">£{item.forecast}</td>
-                    <td className="border border-gray-300 px-4 py-2">£{item.actual}</td>
-                    <td className="border border-gray-300 px-4 py-2">
+                    <td className="border border-gray-300 px-3 py-2 font-medium text-sm">{item.time}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">£{item.forecast}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">£{item.actual}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">£{item.lastYear}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm text-center">{item.forecastCount}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm text-center">{item.actualCount}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm text-center">{item.lastYearCount}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">
                       £{parsedSalesData.lastWeek[index]?.forecast || '0.00'}
                     </td>
-                    <td className="border border-gray-300 px-4 py-2">
-                      £{parsedSalesData.lastYear[index]?.forecast || '0.00'}
+                    <td className="border border-gray-300 px-3 py-2 text-sm">
+                      £{parsedSalesData.lastWeek[index]?.actual || '0.00'}
                     </td>
                   </tr>
                 ))}
