@@ -380,6 +380,116 @@ const DeploymentManagementSystem = () => {
     }));
   };
 
+  const downloadStaffTemplate = () => {
+    const csvContent = 'Name,Under 18\nJohn Smith,false\nJane Doe,true\nMike Johnson,false';
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'staff_template.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportStaffCSV = () => {
+    const csvContent = 'Name,Under 18\n' + 
+      staff.map(member => `"${member.name}",${member.isUnder18}`).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `staff_list_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCSVUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const csv = e.target.result;
+        const lines = csv.split('\n').filter(line => line.trim());
+        
+        if (lines.length < 2) {
+          alert('CSV file must have at least a header row and one data row.');
+          return;
+        }
+
+        const newStaffMembers = [];
+        
+        // Skip header row (index 0)
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          
+          const fields = [];
+          let current = '';
+          let inQuotes = false;
+          
+          for (let j = 0; j < line.length; j++) {
+            const char = line[j];
+            if (char === '"') {
+              inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+              fields.push(current.trim().replace(/^"|"$/g, ''));
+              current = '';
+            } else {
+              current += char;
+            }
+          }
+          fields.push(current.trim().replace(/^"|"$/g, ''));
+          
+          if (fields.length < 2) {
+            alert(`Error parsing CSV file: Invalid format on line ${i + 1}: ${line}\n\nPlease check the file format and try again.`);
+            return;
+          }
+          
+          const name = fields[0].trim();
+          const under18String = fields[1].trim().toLowerCase();
+          const isUnder18 = ['true', '1', 'yes'].includes(under18String);
+          
+          if (!name) {
+            alert(`Error parsing CSV file: Empty name on line ${i + 1}: ${line}\n\nPlease check the file format and try again.`);
+            return;
+          }
+          
+          newStaffMembers.push({
+            id: Date.now() + Math.random(),
+            name,
+            isUnder18
+          });
+        }
+        
+        if (newStaffMembers.length === 0) {
+          alert('No valid staff members found in the CSV file.');
+          return;
+        }
+        
+        if (replaceExistingStaff) {
+          setStaff(newStaffMembers);
+          // Clear all deployments when replacing staff
+          setDeploymentsByDate({});
+          setShiftInfoByDate({});
+          setSalesDataByDate({});
+        } else {
+          setStaff(prev => [...prev, ...newStaffMembers]);
+        }
+        
+        alert(`Successfully imported ${newStaffMembers.length} staff members.`);
+        
+      } catch (error) {
+        alert('Error reading CSV file. Please check the file format and try again.');
+        console.error('CSV parsing error:', error);
+      }
+    };
+    
+    reader.readAsText(file);
+    event.target.value = ''; // Reset file input
+  };
+
   const exportToPDF = () => {
     const printWindow = window.open('', '_blank');
     
