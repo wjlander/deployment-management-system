@@ -104,12 +104,28 @@ echo -e "${BLUE}🔨 Step 9: Building application...${NC}"
 sudo -u $APP_USER npm run build
 
 echo -e "${BLUE}🌐 Step 10: Configuring Nginx...${NC}"
+
+# Ensure the dist directory exists and has correct permissions
+if [ ! -d "$APP_DIR/dist" ]; then
+    echo -e "${YELLOW}⚠️ dist directory not found, creating it...${NC}"
+    sudo -u $APP_USER mkdir -p $APP_DIR/dist
+    echo "<h1>Deployment Management System</h1><p>Building...</p>" > $APP_DIR/dist/index.html
+    chown -R $APP_USER:$APP_USER $APP_DIR/dist
+fi
+
+# Set proper permissions for nginx to read files
+chmod -R 755 $APP_DIR/dist
+
 cat > /etc/nginx/sites-available/$SERVICE_NAME << EOF
 server {
     listen 80;
     server_name $DOMAIN;
     root $APP_DIR/dist;
     index index.html;
+    
+    # Error and access logs
+    error_log /var/log/nginx/${SERVICE_NAME}_error.log;
+    access_log /var/log/nginx/${SERVICE_NAME}_access.log;
 
     # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;
@@ -158,6 +174,13 @@ server {
         access_log off;
         log_not_found off;
     }
+    
+    # Handle favicon.ico
+    location = /favicon.ico {
+        log_not_found off;
+        access_log off;
+        return 204;
+    }
 }
 EOF
 
@@ -175,11 +198,27 @@ nginx -t
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ Nginx configuration is valid${NC}"
+    
+    # Check if files exist and permissions are correct
+    echo -e "${BLUE}🔍 Checking file permissions...${NC}"
+    ls -la $APP_DIR/dist/
+    
     systemctl restart nginx
     systemctl enable nginx
     echo -e "${GREEN}🔄 Nginx restarted and enabled${NC}"
+    
+    # Check nginx status
+    if systemctl is-active --quiet nginx; then
+        echo -e "${GREEN}✅ Nginx is running${NC}"
+    else
+        echo -e "${RED}❌ Nginx failed to start${NC}"
+        echo "Checking nginx error log:"
+        tail -10 /var/log/nginx/error.log
+    fi
 else
     echo -e "${RED}❌ Nginx configuration error${NC}"
+    echo "Nginx configuration test output:"
+    nginx -t
     exit 1
 fi
 
