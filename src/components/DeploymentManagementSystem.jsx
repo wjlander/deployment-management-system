@@ -431,14 +431,7 @@ const DeploymentManagementSystem = () => {
           forecast: forecast.replace('£', ''),
           actual: actual.replace('£', ''),
           lastYear: lastYear.replace('£', ''),
-          fore
-        }
-        )
-      }
-    }
-    )
-  }
-}castCount: parts[4] || '0',
+          forecastCount: parts[4] || '0',
           actualCount: parts[5] || '0',
           lastYearCount: parts[6] || '0'
         });
@@ -1298,13 +1291,12 @@ const DeploymentManagementSystem = () => {
           Parse Sales Data
         </button>
 
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+        {currentSalesData.parsedToday.length > 0 && (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse border border-gray-300">
               <thead>
                 <tr className="bg-gray-50">
                   <th className="border border-gray-300 px-4 py-2 text-left">Time</th>
-                  const isEditing = editingDeployment === deployment.id;
                   <th className="border border-gray-300 px-3 py-2 text-left">Today Forecast</th>
                   <th className="border border-gray-300 px-3 py-2 text-left">Today Actual</th>
                   <th className="border border-gray-300 px-3 py-2 text-left">Last Year</th>
@@ -1315,109 +1307,20 @@ const DeploymentManagementSystem = () => {
                   <th className="border border-gray-300 px-3 py-2 text-left">LW Actual</th>
                 </tr>
               </thead>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {isEditing ? (
-                          <select
-                            value={editValues.position}
-                            onChange={(e) => updateEditValue('position', e.target.value)}
-                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                          >
-                            <option value="">Select Position</option>
-                            {positions.map(pos => (
-                              <option key={pos} value={pos}>{pos}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          deployment.position
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {isEditing ? (
-                          <select
-                            value={editValues.secondary}
-                            onChange={(e) => updateEditValue('secondary', e.target.value)}
-                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                          >
-                            <option value="">Select Secondary</option>
-                            {secondaryPositions.map(pos => (
-                              <option key={pos} value={pos}>{pos}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          deployment.secondary
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {isEditing ? (
-                          <select
-                            value={editValues.area}
-                            onChange={(e) => updateEditValue('area', e.target.value)}
-                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                          >
-                            <option value="">Select Area</option>
-                            {areas.map(area => (
-                              <option key={area} value={area}>{area}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          deployment.area
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {isEditing ? (
-                          <select
-                            value={editValues.cleaning}
-                            onChange={(e) => updateEditValue('cleaning', e.target.value)}
-                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                          >
-                            <option value="">Select Cleaning</option>
-                            {cleaningAreas.map(area => (
-                              <option key={area} value={area}>{area}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          deployment.cleaning
-                        )}
-                      </td>
+              <tbody>
+                {currentSalesData.parsedToday.map((item, index) => (
+                  <tr key={index} className="hover:bg-gray-50">
+                    <td className="border border-gray-300 px-4 py-2 font-medium">{item.time}</td>
                     <td className="border border-gray-300 px-3 py-2 text-sm">£{item.forecast}</td>
                     <td className="border border-gray-300 px-3 py-2 text-sm">£{item.actual}</td>
                     <td className="border border-gray-300 px-3 py-2 text-sm">£{item.lastYear}</td>
                     <td className="border border-gray-300 px-3 py-2 text-sm text-center">{item.forecastCount}</td>
-                        {isEditing ? (
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={saveEditing}
-                              className="text-green-600 hover:text-green-900"
-                              title="Save changes"
-                            >
-                              <Save className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={cancelEditing}
-                              className="text-gray-600 hover:text-gray-900"
-                              title="Cancel editing"
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => startEditing(deployment)}
-                              className="text-blue-600 hover:text-blue-900"
-                              title="Edit deployment"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => removeDeployment(deployment.id)}
-                              className="text-red-600 hover:text-red-900"
-                              title="Delete deployment"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
+                    <td className="border border-gray-300 px-3 py-2 text-sm text-center">{item.actualCount}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm text-center">{item.lastYearCount}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">
+                      £{currentSalesData.parsedLastWeek[index]?.forecast || '0.00'}
+                    </td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">
                       £{currentSalesData.parsedLastWeek[index]?.actual || '0.00'}
                     </td>
                   </tr>
