@@ -457,14 +457,18 @@ const DeploymentManagementSystem = () => {
         [selectedDate]: deploymentsToCopy
       }));
 
-      if (shiftInfoByDate[fromDate]) {
-        const shiftInfoToCopy = {
-          ...shiftInfoByDate[fromDate],
-          date: selectedDate
-        };
-        setShiftInfoByDate(prev => ({
-          ...prev,
-          [selectedDate]: shiftInfoToCopy
+      // Load staff
+      const { data: staffData, error: staffError } = await supabase
+        .from('staff')
+        .select('id, name, is_under_18');
+      
+      if (staffError) {
+        console.error('Error loading staff:', staffError);
+      } else if (staffData && staffData.length > 0) {
+        const formattedStaff = staffData.map(s => ({
+          id: s.id,
+          name: s.name,
+          isUnder18: s.is_under_18
         }));
       }
     }
