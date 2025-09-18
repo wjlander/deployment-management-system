@@ -1274,6 +1274,14 @@ const DeploymentManagementSystem = () => {
             <Trash2 className="w-4 h-4" />
             Delete All Positions
           </button>
+          <button
+            onClick={() => setCurrentPage('cleaning')}
+            className={`px-4 py-2 rounded-md font-medium transition-colors ${
+              currentPage === 'cleaning' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            Cleaning Areas
+          </button>
         </div>
 
         <div className="space-y-4">
