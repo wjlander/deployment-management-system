@@ -8,6 +8,7 @@ echo "============================================="
 
 # Get the domain and app directory from nginx config
 DOMAIN=$(grep "server_name" /etc/nginx/sites-available/deployment-system | awk '{print $2}' | sed 's/;//')
+APP_DIR=$(grep "root" /etc/nginx/sites-available/deployment-system | awk '{print $2}' | sed 's/;//' | sed 's|/dist||')
 APP_DIR=$(grep "root" /etc/nginx/sites-available/deployment-system | awk '{print $2}' | sed 's/;//')
 
 echo "Domain: $DOMAIN"
