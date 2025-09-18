@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Clock, Users, Calendar, Settings, Save, Download, TrendingUp, FileText, Copy, CalendarDays, Edit2 } from 'lucide-react';
+import { Plus, Trash2, Clock, Users, Calendar, Settings, Save, Download, TrendingUp, FileText, Copy, CalendarDays, Edit2, MapPin, Briefcase, Sparkles, LogIn, LogOut } from 'lucide-react';
 
 const DeploymentManagementSystem = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+  const [loginError, setLoginError] = useState('');
   const [currentPage, setCurrentPage] = useState('deployment');
   const [selectedDate, setSelectedDate] = useState('08/09/2025');
   const [staff, setStaff] = useState([
@@ -123,6 +126,12 @@ const DeploymentManagementSystem = () => {
   }, [staff, deploymentsByDate, shiftInfoByDate, salesDataByDate, positions]);
 
   useEffect(() => {
+    // Check if user is already logged in
+    const savedAuth = localStorage.getItem('kfc_auth');
+    if (savedAuth === 'authenticated') {
+      setIsAuthenticated(true);
+    }
+
     const savedData = localStorage.getItem('deploymentData');
     if (savedData) {
       try {
@@ -137,6 +146,25 @@ const DeploymentManagementSystem = () => {
       }
     }
   }, []);
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    setLoginError('');
+    
+    if (loginForm.username === 'kfc' && loginForm.password === 'Chicken1!') {
+      setIsAuthenticated(true);
+      localStorage.setItem('kfc_auth', 'authenticated');
+      setLoginForm({ username: '', password: '' });
+    } else {
+      setLoginError('Invalid username or password');
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('kfc_auth');
+    setCurrentPage('deployment');
+  };
 
   const calculateWorkHours = (startTime, endTime) => {
     const [startHour, startMin] = startTime.split(':').map(Number);
