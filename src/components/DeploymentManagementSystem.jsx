@@ -83,6 +83,9 @@ const DeploymentManagementSystem = () => {
   }, []);
 
   const loadFromSupabase = async () => {
+    try {
+      const { data: staffData, error: staffError } = await supabase
+        .from('staff')
         .select('id, name, is_under_18');
       setSaveStatus('Loading...');
       
