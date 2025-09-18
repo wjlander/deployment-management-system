@@ -808,7 +808,8 @@ const DeploymentManagementSystem = () => {
           { id: 'deployment', label: 'Deployment', icon: Calendar },
           { id: 'staff', label: 'Staff Management', icon: Users },
           { id: 'forecast', label: 'Sales Forecast', icon: TrendingUp },
-          { id: 'positions', label: 'Position Management', icon: Settings }
+          { id: 'positions', label: 'Position Management', icon: Settings },
+          { id: 'cleaning', label: 'Cleaning Areas', icon: Settings }
         ].map(({ id, label, icon: Icon }) => {
           const isActive = currentPage === id;
           const buttonClass = isActive
@@ -1389,6 +1390,85 @@ const DeploymentManagementSystem = () => {
           <div className="text-center py-8 text-gray-500">
             <Settings className="w-12 h-12 mx-auto mb-4 text-gray-300" />
             <p>No positions configured. Add your first position above.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderCleaningAreasPage = () => (
+    <div className="space-y-6">
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Settings className="w-5 h-5 text-green-600" />
+          <h2 className="text-xl font-semibold text-gray-800">Cleaning Areas Management</h2>
+        </div>
+
+        <div className="mb-6 p-4 bg-green-50 rounded-lg">
+          <div className="flex gap-3 items-end">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Cleaning Area Name</label>
+              <input
+                type="text"
+                value={newCleaningArea}
+                onChange={(e) => setNewCleaningArea(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                placeholder="Enter cleaning area name"
+              />
+            </div>
+            <button
+              onClick={() => {
+                if (newCleaningArea.trim()) {
+                  setCleaningAreas(prev => [...prev, newCleaningArea.trim()]);
+                  setNewCleaningArea('');
+                }
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+            >
+              <Plus className="w-4 h-4" />
+              Add Area
+            </button>
+          </div>
+        </div>
+
+        <div className="mb-6 p-4 bg-red-50 rounded-lg border border-red-200">
+          <div className="flex items-center gap-2 mb-3">
+            <Trash2 className="w-4 h-4 text-red-600" />
+            <h3 className="text-sm font-medium text-red-800">Bulk Operations</h3>
+          </div>
+          <button
+            onClick={() => {
+              if (window.confirm('Are you sure you want to delete ALL cleaning areas?')) {
+                setCleaningAreas([]);
+              }
+            }}
+            className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm"
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete All Areas
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {cleaningAreas.map((area, index) => (
+            <div key={index} className="bg-gray-50 rounded-lg p-4 flex justify-between items-center">
+              <div>
+                <div className="font-medium text-gray-800">{area}</div>
+              </div>
+              <button
+                onClick={() => setCleaningAreas(prev => prev.filter((_, i) => i !== index))}
+                className="text-red-600 hover:text-red-800"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {cleaningAreas.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            <Settings className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+            <p>No cleaning areas configured. Add your first cleaning area above.</p>
           </div>
         )}
       </div>
