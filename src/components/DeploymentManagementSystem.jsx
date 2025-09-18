@@ -225,9 +225,8 @@ const DeploymentManagementSystem = () => {
     }
     )
   }
-}
-    });
-  };
+
+  const addDeployment = () => {
 
   const addDeployment = () => {
     if (newDeployment.staffId && newDeployment.startTime && newDeployment.endTime && newDeployment.position) {
