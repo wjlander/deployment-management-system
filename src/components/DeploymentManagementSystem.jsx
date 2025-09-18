@@ -783,6 +783,68 @@ const DeploymentManagementSystem = () => {
     </div>
   );
 
+  // Login page render
+  const renderLoginPage = () => (
+    <div className="min-h-screen bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center p-6">
+      <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="bg-red-600 text-white rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <LogIn className="w-8 h-8" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-800">KFC Login</h1>
+          <p className="text-gray-600 mt-2">Deployment Management System</p>
+        </div>
+        
+        <form onSubmit={handleLogin} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Username
+            </label>
+            <input
+              type="text"
+              value={loginForm.username}
+              onChange={(e) => setLoginForm(prev => ({ ...prev, username: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              placeholder="Enter username"
+              required
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Password
+            </label>
+            <input
+              type="password"
+              value={loginForm.password}
+              onChange={(e) => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              placeholder="Enter password"
+              required
+            />
+          </div>
+          
+          {loginError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+              {loginError}
+            </div>
+          )}
+          
+          <button
+            type="submit"
+            className="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors font-medium"
+          >
+            Sign In
+          </button>
+        </form>
+        
+        <div className="mt-6 text-center text-xs text-gray-500">
+          Authorized personnel only
+        </div>
+      </div>
+    </div>
+  );
+
   const renderDeploymentPage = () => (
     <div className="space-y-6">
       {renderDateSelector()}
