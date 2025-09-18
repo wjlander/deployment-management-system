@@ -61,6 +61,8 @@ const DeploymentManagementSystem = () => {
   const [showNewDateModal, setShowNewDateModal] = useState(false);
   const [newDate, setNewDate] = useState('');
 
+  const [replaceExistingStaff, setReplaceExistingStaff] = useState(false);
+
   const currentDeployments = deploymentsByDate[selectedDate] || [];
   const currentShiftInfo = shiftInfoByDate[selectedDate] || {
     date: selectedDate,
