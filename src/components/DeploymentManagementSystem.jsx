@@ -37,16 +37,14 @@ const DeploymentManagementSystem = () => {
     }
   });
 
-  const [salesData, setSalesData] = useState({
-    todayData: '',
-    lastWeekData: '',
-    lastYearData: ''
-  });
-
-  const [parsedSalesData, setParsedSalesData] = useState({
-    today: [],
-    lastWeek: [],
-    lastYear: []
+  // Store sales data by date
+  const [salesDataByDate, setSalesDataByDate] = useState({
+    '08/09/2025': {
+      todayData: '',
+      lastWeekData: '',
+      parsedToday: [],
+      parsedLastWeek: []
+    }
   });
 
   const [newStaff, setNewStaff] = useState({ name: '', isUnder18: false });
@@ -73,6 +71,13 @@ const DeploymentManagementSystem = () => {
     notes: ''
   };
 
+  // Get current sales data
+  const currentSalesData = salesDataByDate[selectedDate] || {
+    todayData: '',
+    lastWeekData: '',
+    parsedToday: [],
+    parsedLastWeek: []
+  };
   const positions = ['DT', 'DT2', 'Cook', 'Cook2', 'Burgers', 'Fries', 'Chick', 'Rst', 'Lobby', 'Front', 'Mid', 'Transfer', 'T1'];
   const packPositions = ['DT Pack', 'Rst Pack', 'Deliv Pack'];
   const secondaryPositions = [...positions, ...packPositions];
@@ -83,10 +88,11 @@ const DeploymentManagementSystem = () => {
     const data = {
       staff,
       deploymentsByDate,
-      shiftInfoByDate
+      shiftInfoByDate,
+      salesDataByDate
     };
     localStorage.setItem('deploymentData', JSON.stringify(data));
-  }, [staff, deploymentsByDate, shiftInfoByDate]);
+  }, [staff, deploymentsByDate, shiftInfoByDate, salesDataByDate]);
 
   useEffect(() => {
     const savedData = localStorage.getItem('deploymentData');
@@ -96,6 +102,7 @@ const DeploymentManagementSystem = () => {
         if (parsed.staff) setStaff(parsed.staff);
         if (parsed.deploymentsByDate) setDeploymentsByDate(parsed.deploymentsByDate);
         if (parsed.shiftInfoByDate) setShiftInfoByDate(parsed.shiftInfoByDate);
+        if (parsed.salesDataByDate) setSalesDataByDate(parsed.salesDataByDate);
       } catch (e) {
         console.error('Failed to load saved data:', e);
       }
@@ -223,6 +230,15 @@ const DeploymentManagementSystem = () => {
           notes: ''
         }
       }));
+      setSalesDataByDate(prev => ({
+        ...prev,
+        [newDate]: {
+          todayData: '',
+          lastWeekData: '',
+          parsedToday: [],
+          parsedLastWeek: []
+        }
+      }));
       setSelectedDate(newDate);
       setNewDate('');
       setShowNewDateModal(false);
@@ -251,6 +267,17 @@ const DeploymentManagementSystem = () => {
           [selectedDate]: shiftInfoToCopy
         }));
       }
+
+      // Also copy sales data
+      if (salesDataByDate[fromDate]) {
+        const salesDataToCopy = {
+          ...salesDataByDate[fromDate]
+        };
+        setSalesDataByDate(prev => ({
+          ...prev,
+          [selectedDate]: salesDataToCopy
+        }));
+      }
     }
   };
 
@@ -258,11 +285,14 @@ const DeploymentManagementSystem = () => {
     if (dateToDelete && Object.keys(deploymentsByDate).length > 1) {
       const newDeployments = { ...deploymentsByDate };
       const newShiftInfo = { ...shiftInfoByDate };
+      const newSalesData = { ...salesDataByDate };
       delete newDeployments[dateToDelete];
       delete newShiftInfo[dateToDelete];
+      delete newSalesData[dateToDelete];
       
       setDeploymentsByDate(newDeployments);
       setShiftInfoByDate(newShiftInfo);
+      setSalesDataByDate(newSalesData);
       
       if (selectedDate === dateToDelete) {
         const remainingDates = Object.keys(newDeployments);
@@ -312,10 +342,39 @@ const DeploymentManagementSystem = () => {
     return data;
   };
 
+  const updateSalesData = (field, value) => {
+    setSalesDataByDate(prev => ({
+      ...prev,
+      [selectedDate]: {
+        ...prev[selectedDate],
+        [field]: value
+      }
+    }));
+  };
+
   const handleSalesDataParse = () => {
-    setParsedSalesData({
-      today: parseSalesDataText(salesData.todayData),
-      lastWeek: parseSalesDataText(salesData.lastWeekData)
+    const parsedToday = parseSalesDataText(currentSalesData.todayData);
+    const parsedLastWeek = parseSalesDataText(currentSalesData.lastWeekData);
+    
+    setSalesDataByDate(prev => ({
+      ...prev,
+      [selectedDate]: {
+        ...prev[selectedDate],
+        parsedToday,
+        parsedLastWeek
+      }
+    }));
+  };
+
+  const clearSalesData = () => {
+    setSalesDataByDate(prev => ({
+      ...prev,
+      [selectedDate]: {
+        todayData: '',
+        lastWeekData: '',
+        parsedToday: [],
+        parsedLastWeek: []
+      }
     });
   };
 
@@ -343,7 +402,7 @@ const DeploymentManagementSystem = () => {
       `;
     }).join('');
 
-    const forecastRows = parsedSalesData.today.map((item, index) => `
+    const forecastRows = currentSalesData.parsedToday.map((item, index) => `
       <tr>
         <td style="border: 1px solid #ddd; padding: 6px;">${item.time}</td>
         <td style="border: 1px solid #ddd; padding: 6px;">£${item.forecast}</td>
@@ -352,8 +411,8 @@ const DeploymentManagementSystem = () => {
         <td style="border: 1px solid #ddd; padding: 6px;">${item.forecastCount}</td>
         <td style="border: 1px solid #ddd; padding: 6px;">${item.actualCount}</td>
         <td style="border: 1px solid #ddd; padding: 6px;">${item.lastYearCount}</td>
-        <td style="border: 1px solid #ddd; padding: 6px;">£${parsedSalesData.lastWeek[index]?.forecast || '0.00'}</td>
-        <td style="border: 1px solid #ddd; padding: 6px;">£${parsedSalesData.lastWeek[index]?.actual || '0.00'}</td>
+        <td style="border: 1px solid #ddd; padding: 6px;">£${currentSalesData.parsedLastWeek[index]?.forecast || '0.00'}</td>
+        <td style="border: 1px solid #ddd; padding: 6px;">£${currentSalesData.parsedLastWeek[index]?.actual || '0.00'}</td>
       </tr>
     `).join('');
 
@@ -414,7 +473,7 @@ const DeploymentManagementSystem = () => {
       staff,
       deploymentsByDate,
       shiftInfoByDate,
-      salesData: parsedSalesData
+      salesDataByDate
     };
     
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -843,28 +902,50 @@ const DeploymentManagementSystem = () => {
 
   const renderForecastPage = () => (
     <div className="space-y-6">
+      {renderDateSelector()}
+      
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex items-center gap-2 mb-4">
           <TrendingUp className="w-5 h-5 text-green-600" />
-          <h2 className="text-xl font-semibold text-gray-800">Sales Forecast Data</h2>
+          <h2 className="text-xl font-semibold text-gray-800">Sales Forecast Data - {selectedDate}</h2>
+        </div>
+
+        <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-blue-800">
+              <strong>Current Date:</strong> {selectedDate}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={clearSalesData}
+                className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
+              >
+                Clear Data
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Today's Data</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Today's Data ({selectedDate})
+            </label>
             <textarea
-              value={salesData.todayData}
-              onChange={(e) => setSalesData(prev => ({ ...prev, todayData: e.target.value }))}
+              value={currentSalesData.todayData}
+              onChange={(e) => updateSalesData('todayData', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
               rows={15}
               placeholder="Paste today's sales data here (tab-separated format)..."
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Last Week Data</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Last Week Data (Same day last week)
+            </label>
             <textarea
-              value={salesData.lastWeekData}
-              onChange={(e) => setSalesData(prev => ({ ...prev, lastWeekData: e.target.value }))}
+              value={currentSalesData.lastWeekData}
+              onChange={(e) => updateSalesData('lastWeekData', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
               rows={15}
               placeholder="Paste last week's sales data here (tab-separated format)..."
@@ -880,8 +961,11 @@ const DeploymentManagementSystem = () => {
           Parse Sales Data
         </button>
 
-        {parsedSalesData.today.length > 0 && (
+        {currentSalesData.parsedToday.length > 0 && (
           <div className="overflow-x-auto">
+            <div className="mb-2 text-sm text-gray-600">
+              Showing {currentSalesData.parsedToday.length} time periods for {selectedDate}
+            </div>
             <table className="w-full border-collapse border border-gray-300">
               <thead>
                 <tr className="bg-gray-50">
@@ -897,7 +981,7 @@ const DeploymentManagementSystem = () => {
                 </tr>
               </thead>
               <tbody>
-                {parsedSalesData.today.map((item, index) => (
+                {currentSalesData.parsedToday.map((item, index) => (
                   <tr key={index} className="hover:bg-gray-50">
                     <td className="border border-gray-300 px-3 py-2 font-medium text-sm">{item.time}</td>
                     <td className="border border-gray-300 px-3 py-2 text-sm">£{item.forecast}</td>
@@ -907,10 +991,10 @@ const DeploymentManagementSystem = () => {
                     <td className="border border-gray-300 px-3 py-2 text-sm text-center">{item.actualCount}</td>
                     <td className="border border-gray-300 px-3 py-2 text-sm text-center">{item.lastYearCount}</td>
                     <td className="border border-gray-300 px-3 py-2 text-sm">
-                      £{parsedSalesData.lastWeek[index]?.forecast || '0.00'}
+                      £{currentSalesData.parsedLastWeek[index]?.forecast || '0.00'}
                     </td>
                     <td className="border border-gray-300 px-3 py-2 text-sm">
-                      £{parsedSalesData.lastWeek[index]?.actual || '0.00'}
+                      £{currentSalesData.parsedLastWeek[index]?.actual || '0.00'}
                     </td>
                   </tr>
                 ))}
