@@ -90,11 +90,11 @@ const DeploymentManagementSystem = () => {
       setSaveStatus('Loading...');
       
       // Load staff
-      const { error: staffError } = await supabase
-      if (staffData && staffData.length > 0) {
       const { data: staffData, error: staffError } = await supabase
           name: s.name,
           isUnder18: s.is_under_18
+      
+      if (staffData && staffData.length > 0) {
         })), { onConflict: 'id' });
         setStaff(formattedStaff);
       }
