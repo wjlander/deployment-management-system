@@ -5,15 +5,7 @@ import { supabase } from '../lib/supabase';
 const DeploymentManagementSystem = () => {
   const [currentPage, setCurrentPage] = useState('deployment');
   const [selectedDate, setSelectedDate] = useState('08/09/2025');
-  const [staff, setStaff] = useState([
-    { id: '1', name: 'Will Lander', isUnder18: false },
-    { id: '2', name: 'Shane Whiteley', isUnder18: false },
-    { id: '3', name: 'Craig Lloyd', isUnder18: false },
-    { id: '4', name: 'Evan Anderson', isUnder18: true },
-    { id: '5', name: 'Max Lloyd', isUnder18: false },
-    { id: '6', name: 'Jessica Ford', isUnder18: false },
-    { id: '7', name: 'Sam Edwards', isUnder18: false }
-  ]);
+  const [staff, setStaff] = useState([]);
 
   const [positions, setPositions] = useState({
     position: ['DT', 'DT2', 'Cook', 'Cook2', 'Burgers', 'Fries', 'Chick', 'Rst', 'Lobby', 'Front', 'Mid', 'Transfer', 'T1'],
@@ -23,21 +15,10 @@ const DeploymentManagementSystem = () => {
   });
 
   // Store deployments by date
-  const [deploymentsByDate, setDeploymentsByDate] = useState({
-    '08/09/2025': []
-  });
+  const [deploymentsByDate, setDeploymentsByDate] = useState({});
 
   // Store shift info by date
-  const [shiftInfoByDate, setShiftInfoByDate] = useState({
-    '08/09/2025': {
-      date: '08/09/2025',
-      forecast: '£0.00',
-      dayShiftForecast: '£0.00',
-      nightShiftForecast: '£0.00',
-      weather: '',
-      notes: ''
-    }
-  });
+  const [shiftInfoByDate, setShiftInfoByDate] = useState({});
 
   const [salesData, setSalesData] = useState({
     todayData: '',
@@ -69,7 +50,7 @@ const DeploymentManagementSystem = () => {
   const [usingSupabase, setUsingSupabase] = useState(false);
 
   // Get current deployments and shift info
-  const currentDeployments = deploymentsByDate[selectedDate] || [];
+  const currentDeployments = Array.isArray(deploymentsByDate[selectedDate]) ? deploymentsByDate[selectedDate] : [];
   const currentShiftInfo = shiftInfoByDate[selectedDate] || {
     date: selectedDate,
     forecast: '£0.00',
@@ -287,14 +268,41 @@ const DeploymentManagementSystem = () => {
     if (savedData) {
       try {
         const { staff: savedStaff, deploymentsByDate: savedDeployments, shiftInfoByDate: savedShiftInfo, positions: savedPositions, salesData: savedSalesData } = JSON.parse(savedData);
-        if (savedStaff) setStaff(savedStaff);
-        if (savedDeployments) setDeploymentsByDate(savedDeployments);
-        if (savedShiftInfo) setShiftInfoByDate(savedShiftInfo);
-        if (savedPositions) setPositions(savedPositions);
-        if (savedSalesData) setSalesData(savedSalesData);
+        if (Array.isArray(savedStaff)) setStaff(savedStaff);
+        if (savedDeployments && typeof savedDeployments === 'object') setDeploymentsByDate(savedDeployments);
+        if (savedShiftInfo && typeof savedShiftInfo === 'object') setShiftInfoByDate(savedShiftInfo);
+        if (savedPositions && typeof savedPositions === 'object') setPositions(savedPositions);
+        if (savedSalesData && typeof savedSalesData === 'object') setSalesData(savedSalesData);
       } catch (e) {
         console.error('Failed to load saved data:', e);
       }
+    }
+    
+    // Initialize with default data if nothing was loaded
+    setStaff(prev => prev.length > 0 ? prev : [
+      { id: '1', name: 'Will Lander', isUnder18: false },
+      { id: '2', name: 'Shane Whiteley', isUnder18: false },
+      { id: '3', name: 'Craig Lloyd', isUnder18: false },
+      { id: '4', name: 'Evan Anderson', isUnder18: true },
+      { id: '5', name: 'Max Lloyd', isUnder18: false },
+      { id: '6', name: 'Jessica Ford', isUnder18: false },
+      { id: '7', name: 'Sam Edwards', isUnder18: false }
+    ]);
+    
+    setDeploymentsByDate(prev => Object.keys(prev).length > 0 ? prev : {
+      '08/09/2025': []
+    });
+    
+    setShiftInfoByDate(prev => Object.keys(prev).length > 0 ? prev : {
+      '08/09/2025': {
+        date: '08/09/2025',
+        forecast: '£0.00',
+        dayShiftForecast: '£0.00',
+        nightShiftForecast: '£0.00',
+        weather: '',
+        notes: ''
+      }
+    });
     }
   };
 
@@ -963,7 +971,7 @@ const DeploymentManagementSystem = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {staff.map((staffMember) => (
+              {Array.isArray(currentDeployments) && currentDeployments.map((deployment) => {
                 <tr key={staffMember.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {staffMember.name}
@@ -991,7 +999,7 @@ const DeploymentManagementSystem = () => {
               ))}
             </tbody>
           </table>
-        </div>
+              {Array.isArray(staff) && staff.map((staffMember) => (
       </div>
     </div>
   );
@@ -1008,7 +1016,7 @@ const DeploymentManagementSystem = () => {
             </h3>
             
             <div className="flex flex-wrap gap-2 mb-4">
-              {positionList.map((position) => (
+              {Array.isArray(positionList) && positionList.map((position) => (
                 <div key={position} className="flex items-center bg-gray-100 rounded-full px-3 py-1">
                   <span className="text-sm text-gray-700">{position}</span>
                   <button
