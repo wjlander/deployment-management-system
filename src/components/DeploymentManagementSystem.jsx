@@ -108,30 +108,29 @@ const DeploymentManagementSystem = () => {
       // Load positions
       const { data: positionsData, error: positionsError } = await supabase
         .from('positions')
-        .select('name, type');
+        .select('*');
       
       if (positionsData && positionsData.length > 0) {
-        const groupedPositions = {
-          areas: {},
-          cleaning_area: []
-        };
-        
-        positionsData.forEach(p => {
-          if (p.type === 'cleaning_area') {
-            groupedPositions.cleaning_area.push(p.name);
-          } else if (p.type === 'area') {
-            if (!groupedPositions.areas[p.name]) {
-              groupedPositions.areas[p.name] = [];
+        // Group positions by type
+        const positionsByType = positionsData.reduce((acc, position) => {
+          if (position.type === 'cleaning_area') {
+            acc.cleaningAreas.push(position.name);
+          } else if (position.type === 'area') {
+            acc.areas[position.name] = [];
+          } else if (position.type === 'position') {
+            // For positions, we need to find which area they belong to
+            // Since we don't have area_name, we'll need to handle this differently
+            if (!acc.positions[position.name]) {
+              acc.positions[position.name] = position.name;
             }
-          } else if (p.type === 'position') {
-            // Find which area this position belongs to by checking area name in position data
-            const areaName = p.area_name || 'General';
-            if (!groupedPositions.areas[areaName]) {
-              groupedPositions.areas[areaName] = [];
-            }
-            groupedPositions.areas[areaName].push(p.name);
           }
-        });
+          return acc;
+        }, { areas: {}, cleaningAreas: [], positions: {} });
+
+        const groupedPositions = {
+          areas: positionsByType.areas,
+          cleaning_area: positionsByType.cleaningAreas
+        };
         
         setPositions(groupedPositions);
       }
