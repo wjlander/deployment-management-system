@@ -658,7 +658,41 @@ const DeploymentManagementSystem = () => {
   const addPositionLegacy = (type, name) => {
     if (type === 'cleaning_area') {
       addCleaningArea(name);
-    }));
+    }
+  };
+
+  const handleCSVUpload = (event) => {
+    const file = event.target.files[0];
+    if (file && file.type === 'text/csv') {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const csv = e.target.result;
+        const lines = csv.split('\n');
+        const headers = lines[0].split(',').map(h => h.trim());
+        
+        const newStaff = [];
+        for (let i = 1; i < lines.length; i++) {
+          const values = lines[i].split(',').map(v => v.trim());
+          if (values.length >= 2 && values[0]) {
+            const staffMember = {
+              id: crypto.randomUUID(),
+              name: values[0],
+              isUnder18: values[1]?.toLowerCase() === 'true' || values[1]?.toLowerCase() === 'yes'
+            };
+            newStaff.push(staffMember);
+          }
+        }
+        
+        if (newStaff.length > 0) {
+          setStaff(prev => [...prev, ...newStaff]);
+          alert(`Successfully imported ${newStaff.length} staff members`);
+        }
+      };
+      reader.readAsText(file);
+    } else {
+      alert('Please select a valid CSV file');
+    }
+    event.target.value = '';
   };
 
   const parseSalesData = (data) => {
