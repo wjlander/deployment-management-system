@@ -5,7 +5,15 @@ import { supabase } from '../lib/supabase';
 const DeploymentManagementSystem = () => {
   const [currentPage, setCurrentPage] = useState('deployment');
   const [selectedDate, setSelectedDate] = useState('08/09/2025');
-  const [staff, setStaff] = useState([]);
+  const [staff, setStaff] = useState([
+    { id: '1', name: 'Will Lander', isUnder18: false },
+    { id: '2', name: 'Shane Whiteley', isUnder18: false },
+    { id: '3', name: 'Craig Lloyd', isUnder18: false },
+    { id: '4', name: 'Evan Anderson', isUnder18: true },
+    { id: '5', name: 'Max Lloyd', isUnder18: false },
+    { id: '6', name: 'Jessica Ford', isUnder18: false },
+    { id: '7', name: 'Sam Edwards', isUnder18: false }
+  ]);
 
   const [positions, setPositions] = useState({
     position: ['DT', 'DT2', 'Cook', 'Cook2', 'Burgers', 'Fries', 'Chick', 'Rst', 'Lobby', 'Front', 'Mid', 'Transfer', 'T1'],
@@ -15,10 +23,21 @@ const DeploymentManagementSystem = () => {
   });
 
   // Store deployments by date
-  const [deploymentsByDate, setDeploymentsByDate] = useState({});
+  const [deploymentsByDate, setDeploymentsByDate] = useState({
+    '08/09/2025': []
+  });
 
   // Store shift info by date
-  const [shiftInfoByDate, setShiftInfoByDate] = useState({});
+  const [shiftInfoByDate, setShiftInfoByDate] = useState({
+    '08/09/2025': {
+      date: '08/09/2025',
+      forecast: '£0.00',
+      dayShiftForecast: '£0.00',
+      nightShiftForecast: '£0.00',
+      weather: '',
+      notes: ''
+    }
+  });
 
   const [salesData, setSalesData] = useState({
     todayData: '',
@@ -64,17 +83,12 @@ const DeploymentManagementSystem = () => {
   useEffect(() => {
     const checkSupabase = async () => {
       try {
-        if (supabase) {
-          const { data, error } = await supabase.from('staff').select('count').limit(1);
-          if (!error) {
-            setUsingSupabase(true);
-            await loadFromSupabase();
-          } else {
-            console.log('Supabase connection failed, using local storage');
-            loadFromLocalStorage();
-          }
+        const { data, error } = await supabase.from('staff').select('count').limit(1);
+        if (!error) {
+          setUsingSupabase(true);
+          await loadFromSupabase();
         } else {
-          console.log('Supabase not configured, using local storage');
+          console.log('Supabase connection failed, using local storage');
           loadFromLocalStorage();
         }
       } catch (e) {
@@ -88,7 +102,7 @@ const DeploymentManagementSystem = () => {
   }, []);
 
   const loadFromSupabase = async () => {
-    if (!supabase) return;
+    // Supabase is now always available
     
     try {
       setSaveStatus('Loading...');
@@ -197,7 +211,7 @@ const DeploymentManagementSystem = () => {
   };
 
   const saveToSupabase = async () => {
-    if (!usingSupabase || !supabase) return;
+    if (!usingSupabase) return;
     
     try {
       setSaveStatus('Saving...');

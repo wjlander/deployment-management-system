@@ -1,9 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+const supabaseUrl = 'https://awgxhfpjpdhmbkglhmmj.supabase.co'
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3Z3hoZnBqcGRobWJrZ2xobW1qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyMDU2OTEsImV4cCI6MjA3Mzc4MTY5MX0.'
 
-// Only create Supabase client if both URL and key are available
-export const supabase = supabaseUrl && supabaseAnonKey 
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : null
+// Create Supabase client with hardcoded credentials
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
