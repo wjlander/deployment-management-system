@@ -303,7 +303,6 @@ const DeploymentManagementSystem = () => {
         notes: ''
       }
     });
-    }
   };
 
   const saveToLocalStorage = () => {
@@ -999,6 +998,7 @@ const DeploymentManagementSystem = () => {
               ))}
             </tbody>
           </table>
+        </div>
       </div>
     </div>
   );
