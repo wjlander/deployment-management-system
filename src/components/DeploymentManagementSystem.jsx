@@ -861,4 +861,305 @@ const DeploymentManagementSystem = () => {
                         <select
                           value={deployment.cleaning}
                           onChange={(e) => updateDeployment(deployment.id, 'cleaning', e.target.value)}
-                          className="text-sm border border-gray-300 
+                          className="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        >
+                          <option value="">None</option>
+                          {positions.cleaning_area.map(area => (
+                            <option key={area} value={area}>{area}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {deployment.breakMinutes}min
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button
+                          onClick={() => removeDeployment(deployment.id)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderStaffPage = () => (
+    <div className="space-y-6">
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">Staff Management</h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Staff Name</label>
+            <input
+              type="text"
+              value={newStaff.name}
+              onChange={(e) => setNewStaff(prev => ({ ...prev, name: e.target.value }))}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter staff name"
+            />
+          </div>
+          
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="isUnder18"
+              checked={newStaff.isUnder18}
+              onChange={(e) => setNewStaff(prev => ({ ...prev, isUnder18: e.target.checked }))}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label htmlFor="isUnder18" className="ml-2 block text-sm text-gray-900">
+              Under 18 years old
+            </label>
+          </div>
+          
+          <div className="flex items-end">
+            <button
+              onClick={addStaff}
+              className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center justify-center space-x-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Staff</span>
+            </button>
+          </div>
+        </div>
+        
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {staff.map((staffMember) => (
+                <tr key={staffMember.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {staffMember.name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {staffMember.isUnder18 ? (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                        Under 18
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        18+
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button
+                      onClick={() => removeStaff(staffMember.id)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderPositionsPage = () => (
+    <div className="space-y-6">
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">Position Management</h2>
+        
+        {Object.entries(positions).map(([type, positionList]) => (
+          <div key={type} className="mb-8">
+            <h3 className="text-lg font-semibold text-gray-700 mb-4 capitalize">
+              {type.replace('_', ' ')} Positions
+            </h3>
+            
+            <div className="flex flex-wrap gap-2 mb-4">
+              {positionList.map((position) => (
+                <div key={position} className="flex items-center bg-gray-100 rounded-full px-3 py-1">
+                  <span className="text-sm text-gray-700">{position}</span>
+                  <button
+                    onClick={() => removePosition(type, position)}
+                    className="ml-2 text-red-500 hover:text-red-700"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            
+            <div className="flex space-x-2">
+              <input
+                type="text"
+                placeholder={`Add new ${type.replace('_', ' ')} position`}
+                className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    addPosition(type, e.target.value);
+                    e.target.value = '';
+                  }
+                }}
+              />
+              <button
+                onClick={(e) => {
+                  const input = e.target.previousElementSibling;
+                  addPosition(type, input.value);
+                  input.value = '';
+                }}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderSalesPage = () => (
+    <div className="space-y-6">
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">Sales Analysis</h2>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Today's Data</label>
+            <textarea
+              value={salesData.todayData}
+              onChange={(e) => setSalesData(prev => ({ ...prev, todayData: e.target.value }))}
+              className="w-full h-32 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-xs"
+              placeholder="Paste today's sales data here..."
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Last Week Data</label>
+            <textarea
+              value={salesData.lastWeekData}
+              onChange={(e) => setSalesData(prev => ({ ...prev, lastWeekData: e.target.value }))}
+              className="w-full h-32 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-xs"
+              placeholder="Paste last week's sales data here..."
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Last Year Data</label>
+            <textarea
+              value={salesData.lastYearData}
+              onChange={(e) => setSalesData(prev => ({ ...prev, lastYearData: e.target.value }))}
+              className="w-full h-32 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-xs"
+              placeholder="Paste last year's sales data here..."
+            />
+          </div>
+        </div>
+        
+        {(parsedSalesData.today.length > 0 || parsedSalesData.lastWeek.length > 0 || parsedSalesData.lastYear.length > 0) && (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Today</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Week</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Year</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {Array.from(new Set([
+                  ...parsedSalesData.today.map(d => d.time),
+                  ...parsedSalesData.lastWeek.map(d => d.time),
+                  ...parsedSalesData.lastYear.map(d => d.time)
+                ])).sort().map(time => {
+                  const todayData = parsedSalesData.today.find(d => d.time === time);
+                  const lastWeekData = parsedSalesData.lastWeek.find(d => d.time === time);
+                  const lastYearData = parsedSalesData.lastYear.find(d => d.time === time);
+                  
+                  return (
+                    <tr key={time}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {time}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {todayData ? todayData.sales : '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {lastWeekData ? lastWeekData.sales : '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {lastYearData ? lastYearData.sales : '-'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Deployment Management System</h1>
+          <p className="mt-2 text-gray-600">Manage staff deployments, positions, and analyze sales data</p>
+        </div>
+        
+        {renderNavigation()}
+        
+        {/* New Date Modal */}
+        {showNewDateModal && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+              <div className="mt-3">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Create New Date</h3>
+                <input
+                  type="date"
+                  value={newDate}
+                  onChange={(e) => setNewDate(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+                />
+                <div className="flex space-x-2">
+                  <button
+                    onClick={createNewDate}
+                    className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                  >
+                    Create
+                  </button>
+                  <button
+                    onClick={() => setShowNewDateModal(false)}
+                    className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {currentPage === 'deployment' && renderDeploymentPage()}
+        {currentPage === 'staff' && renderStaffPage()}
+        {currentPage === 'positions' && renderPositionsPage()}
+        {currentPage === 'sales' && renderSalesPage()}
+      </div>
+    </div>
+  );
+};
+
+export default DeploymentManagementSystem;
