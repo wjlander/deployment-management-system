@@ -661,6 +661,40 @@ const DeploymentManagementSystem = () => {
     }
   };
 
+  const handleCSVUpload = (event) => {
+    const file = event.target.files[0];
+    if (file && file.type === 'text/csv') {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const csv = e.target.result;
+        const lines = csv.split('\n');
+        const headers = lines[0].split(',').map(h => h.trim());
+        
+        const newStaff = [];
+        for (let i = 1; i < lines.length; i++) {
+          const values = lines[i].split(',').map(v => v.trim());
+          if (values.length >= 2 && values[0]) {
+            const staffMember = {
+              id: crypto.randomUUID(),
+              name: values[0],
+              isUnder18: values[1]?.toLowerCase() === 'true' || values[1]?.toLowerCase() === 'yes'
+            };
+            newStaff.push(staffMember);
+          }
+        }
+        
+        if (newStaff.length > 0) {
+          setStaff(prev => [...prev, ...newStaff]);
+          alert(`Successfully imported ${newStaff.length} staff members`);
+        }
+      };
+      reader.readAsText(file);
+    } else {
+      alert('Please select a valid CSV file');
+    }
+    event.target.value = '';
+  };
+
   const parseSalesData = (data) => {
     if (!data) return [];
     
@@ -1081,14 +1115,28 @@ const DeploymentManagementSystem = () => {
             </label>
           </div>
           
-          <div className="flex items-end">
+          <div className="flex items-end space-x-2">
             <button
               onClick={addStaff}
-              className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center justify-center space-x-2"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              <Plus className="w-4 h-4" />
-              <span>Add Staff</span>
+              <Plus className="w-4 h-4 mr-2 inline" />
+              Add Staff
             </button>
+            
+            <div className="flex items-center gap-2">
+              <label className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer">
+                <Download className="w-4 h-4 mr-2 inline" />
+                Import CSV
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleCSVUpload}
+                  className="hidden"
+                />
+              </label>
+              <span className="text-sm text-gray-500">Format: Name, Under18 (true/false)</span>
+            </div>
           </div>
         </div>
         
