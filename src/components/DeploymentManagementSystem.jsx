@@ -280,13 +280,13 @@ const DeploymentManagementSystem = () => {
     
     // Initialize with default data if nothing was loaded
     setStaff(prev => prev.length > 0 ? prev : [
-      { id: '1', name: 'Will Lander', isUnder18: false },
-      { id: '2', name: 'Shane Whiteley', isUnder18: false },
-      { id: '3', name: 'Craig Lloyd', isUnder18: false },
-      { id: '4', name: 'Evan Anderson', isUnder18: true },
-      { id: '5', name: 'Max Lloyd', isUnder18: false },
-      { id: '6', name: 'Jessica Ford', isUnder18: false },
-      { id: '7', name: 'Sam Edwards', isUnder18: false }
+      { id: crypto.randomUUID(), name: 'Will Lander', isUnder18: false },
+      { id: crypto.randomUUID(), name: 'Shane Whiteley', isUnder18: false },
+      { id: crypto.randomUUID(), name: 'Craig Lloyd', isUnder18: false },
+      { id: crypto.randomUUID(), name: 'Evan Anderson', isUnder18: true },
+      { id: crypto.randomUUID(), name: 'Max Lloyd', isUnder18: false },
+      { id: crypto.randomUUID(), name: 'Jessica Ford', isUnder18: false },
+      { id: crypto.randomUUID(), name: 'Sam Edwards', isUnder18: false }
     ]);
     
     setDeploymentsByDate(prev => Object.keys(prev).length > 0 ? prev : {
