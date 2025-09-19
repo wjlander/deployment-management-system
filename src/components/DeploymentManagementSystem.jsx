@@ -8,9 +8,7 @@ const DeploymentManagementSystem = () => {
   const [staff, setStaff] = useState([]);
 
   const [positions, setPositions] = useState({
-    position: ['DT', 'DT2', 'Cook', 'Cook2', 'Burgers', 'Fries', 'Chick', 'Rst', 'Lobby', 'Front', 'Mid', 'Transfer', 'T1'],
-    pack_position: ['DT Pack', 'Rst Pack', 'Deliv Pack'],
-    area: ['Cooks', 'DT', 'Front', 'Mid', 'Lobby', 'Pck Mid', 'Float / Bottlenecks', 'Table Service / Lobby'],
+    areas: {},
     cleaning_area: ['Lobby / Toilets', 'Front', 'Staff Room / Toilet', 'Kitchen']
   });
 
@@ -48,6 +46,9 @@ const DeploymentManagementSystem = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState('');
   const [usingSupabase, setUsingSupabase] = useState(false);
+  const [newAreaName, setNewAreaName] = useState('');
+  const [newPositionName, setNewPositionName] = useState('');
+  const [selectedAreaForPosition, setSelectedAreaForPosition] = useState('');
 
   // Get current deployments and shift info
   const currentDeployments = Array.isArray(deploymentsByDate[selectedDate]) ? deploymentsByDate[selectedDate] : [];
@@ -111,15 +112,24 @@ const DeploymentManagementSystem = () => {
       
       if (positionsData && positionsData.length > 0) {
         const groupedPositions = {
-          position: [],
-          pack_position: [],
-          area: [],
+          areas: {},
           cleaning_area: []
         };
         
         positionsData.forEach(p => {
-          if (groupedPositions[p.type]) {
-            groupedPositions[p.type].push(p.name);
+          if (p.type === 'cleaning_area') {
+            groupedPositions.cleaning_area.push(p.name);
+          } else if (p.type === 'area') {
+            if (!groupedPositions.areas[p.name]) {
+              groupedPositions.areas[p.name] = [];
+            }
+          } else if (p.type === 'position') {
+            // Find which area this position belongs to by checking area name in position data
+            const areaName = p.area_name || 'General';
+            if (!groupedPositions.areas[areaName]) {
+              groupedPositions.areas[areaName] = [];
+            }
+            groupedPositions.areas[areaName].push(p.name);
           }
         });
         
@@ -209,11 +219,24 @@ const DeploymentManagementSystem = () => {
       // Save positions
       await supabase.from('positions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       const positionsToSave = [];
-      Object.entries(positions).forEach(([type, names]) => {
-        names.forEach(name => {
-          positionsToSave.push({ name, type });
+      
+      // Save areas
+      Object.keys(positions.areas).forEach(areaName => {
+        positionsToSave.push({ name: areaName, type: 'area' });
+      });
+      
+      // Save positions within areas
+      Object.entries(positions.areas).forEach(([areaName, positionList]) => {
+        positionList.forEach(positionName => {
+          positionsToSave.push({ name: positionName, type: 'position', area_name: areaName });
         });
       });
+      
+      // Save cleaning areas
+      positions.cleaning_area.forEach(name => {
+        positionsToSave.push({ name, type: 'cleaning_area' });
+      });
+      
       if (positionsToSave.length > 0) {
         await supabase.from('positions').insert(positionsToSave);
       }
@@ -302,6 +325,11 @@ const DeploymentManagementSystem = () => {
         weather: '',
         notes: ''
       }
+    });
+    
+    setPositions(prev => Object.keys(prev.areas || {}).length > 0 ? prev : {
+      areas: {},
+      cleaning_area: ['Lobby / Toilets', 'Front', 'Staff Room / Toilet', 'Kitchen']
     });
   };
 
@@ -513,8 +541,104 @@ const DeploymentManagementSystem = () => {
     return staffMember ? staffMember.name : 'Unknown';
   };
 
+  const addArea = (areaName) => {
+    if (areaName && !positions.areas[areaName]) {
+      setPositions(prev => ({
+        ...prev,
+        areas: {
+          ...prev.areas,
+          [areaName]: []
+        }
+      }));
+    }
+  };
+
+  const removeArea = (areaName) => {
+    setPositions(prev => {
+      const newAreas = { ...prev.areas };
+      delete newAreas[areaName];
+      return {
+        ...prev,
+        areas: newAreas
+      };
+    });
+  };
+
+  const addPositionToArea = (areaName, positionName) => {
+    if (positionName && positions.areas[areaName] && !positions.areas[areaName].includes(positionName)) {
+      setPositions(prev => ({
+        ...prev,
+        areas: {
+          ...prev.areas,
+          [areaName]: [...prev.areas[areaName], positionName]
+        }
+      }));
+    }
+  };
+
+  const removePositionFromArea = (areaName, positionName) => {
+    setPositions(prev => ({
+      ...prev,
+      areas: {
+        ...prev.areas,
+        [areaName]: prev.areas[areaName].filter(p => p !== positionName)
+      }
+    }));
+  };
+
+  const removeCleaningArea = (name) => {
+    setPositions(prev => ({
+      ...prev,
+      cleaning_area: prev.cleaning_area.filter(p => p !== name)
+    }));
+  };
+
+  const addCleaningArea = (name) => {
+    if (name && !positions.cleaning_area.includes(name)) {
+      setPositions(prev => ({
+        ...prev,
+        cleaning_area: [...prev.cleaning_area, name]
+      }));
+    }
+  };
+
+  // Get all positions from all areas for dropdowns
+  const getAllPositions = () => {
+    const allPositions = [];
+    Object.values(positions.areas).forEach(areaPositions => {
+      allPositions.push(...areaPositions);
+    });
+    return allPositions;
+  };
+
+  // Get all area names for dropdowns
+  const getAllAreas = () => {
+    return Object.keys(positions.areas);
+  };
+
+  const getAreaForPosition = (positionName) => {
+    for (const [areaName, areaPositions] of Object.entries(positions.areas)) {
+      if (areaPositions.includes(positionName)) {
+        return areaName;
+      }
+    }
+    return '';
+  };
+
   const addPosition = (type, name) => {
-    if (name && !positions[type].includes(name)) {
+    if (type === 'cleaning_area') {
+      addCleaningArea(name);
+    }
+  };
+
+  const removePosition = (type, name) => {
+    if (type === 'cleaning_area') {
+      removeCleaningArea(name);
+    }
+  };
+
+  const addPositionOld = (type, name) => {
+    if (name && positions[type] && !positions[type].includes(name)) {
       setPositions(prev => ({
         ...prev,
         [type]: [...prev[type], name]
@@ -522,10 +646,18 @@ const DeploymentManagementSystem = () => {
     }
   };
 
-  const removePosition = (type, name) => {
-    setPositions(prev => ({
-      ...prev,
-      [type]: prev[type].filter(p => p !== name)
+  const removePositionOld = (type, name) => {
+    if (positions[type]) {
+      setPositions(prev => ({
+        ...prev,
+        [type]: prev[type].filter(p => p !== name)
+      }));
+    }
+  };
+
+  const addPositionLegacy = (type, name) => {
+    if (type === 'cleaning_area') {
+      addCleaningArea(name);
     }));
   };
 
@@ -856,7 +988,7 @@ const DeploymentManagementSystem = () => {
                           }`}
                         >
                           <option value="">Select position</option>
-                          {positions.position.map(pos => (
+                          {getAllPositions().map(pos => (
                             <option key={pos} value={pos}>{pos}</option>
                           ))}
                         </select>
@@ -868,7 +1000,7 @@ const DeploymentManagementSystem = () => {
                           className="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         >
                           <option value="">None</option>
-                          {[...positions.position, ...positions.pack_position].map(pos => (
+                          {getAllPositions().map(pos => (
                             <option key={pos} value={pos}>{pos}</option>
                           ))}
                         </select>
@@ -880,7 +1012,7 @@ const DeploymentManagementSystem = () => {
                           className="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         >
                           <option value="">None</option>
-                          {positions.area.map(area => (
+                          {getAllAreas().map(area => (
                             <option key={area} value={area}>{area}</option>
                           ))}
                         </select>
@@ -1008,6 +1140,141 @@ const DeploymentManagementSystem = () => {
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">Position Management</h2>
         
+        {/* Areas Management */}
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold text-gray-700 mb-4">Areas</h3>
+          
+          <div className="flex space-x-2 mb-4">
+            <input
+              type="text"
+              value={newAreaName}
+              onChange={(e) => setNewAreaName(e.target.value)}
+              placeholder="Add new area (e.g., Kitchen, Front Counter)"
+              className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  addArea(newAreaName);
+                  setNewAreaName('');
+                }
+              }}
+            />
+            <button
+              onClick={() => {
+                addArea(newAreaName);
+                setNewAreaName('');
+              }}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Object.entries(positions.areas).map(([areaName, areaPositions]) => (
+              <div key={areaName} className="border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-medium text-gray-800">{areaName}</h4>
+                  <button
+                    onClick={() => removeArea(areaName)}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+                
+                <div className="space-y-2 mb-3">
+                  {areaPositions.map((position) => (
+                    <div key={position} className="flex items-center justify-between bg-gray-50 rounded px-2 py-1">
+                      <span className="text-sm text-gray-700">{position}</span>
+                      <button
+                        onClick={() => removePositionFromArea(areaName, position)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="flex space-x-1">
+                  <input
+                    type="text"
+                    placeholder="Add position"
+                    className="flex-1 text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        addPositionToArea(areaName, e.target.value);
+                        e.target.value = '';
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={(e) => {
+                      const input = e.target.previousElementSibling;
+                      addPositionToArea(areaName, input.value);
+                      input.value = '';
+                    }}
+                    className="bg-green-600 text-white px-2 py-1 rounded text-sm hover:bg-green-700"
+                  >
+                    <Plus className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Cleaning Areas */}
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold text-gray-700 mb-4">Cleaning Areas</h3>
+          
+          <div className="flex flex-wrap gap-2 mb-4">
+            {positions.cleaning_area.map((area) => (
+              <div key={area} className="flex items-center bg-gray-100 rounded-full px-3 py-1">
+                <span className="text-sm text-gray-700">{area}</span>
+                <button
+                  onClick={() => removeCleaningArea(area)}
+                  className="ml-2 text-red-500 hover:text-red-700"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+          
+          <div className="flex space-x-2">
+            <input
+              type="text"
+              placeholder="Add new cleaning area"
+              className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  addCleaningArea(e.target.value);
+                  e.target.value = '';
+                }
+              }}
+            />
+            <button
+              onClick={(e) => {
+                const input = e.target.previousElementSibling;
+                addCleaningArea(input.value);
+                input.value = '';
+              }}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderPositionsPageOld = () => (
+    <div className="space-y-6">
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">Position Management</h2>
+        
         {Object.entries(positions).map(([type, positionList]) => (
           <div key={type} className="mb-8">
             <h3 className="text-lg font-semibold text-gray-700 mb-4 capitalize">
@@ -1019,7 +1286,7 @@ const DeploymentManagementSystem = () => {
                 <div key={position} className="flex items-center bg-gray-100 rounded-full px-3 py-1">
                   <span className="text-sm text-gray-700">{position}</span>
                   <button
-                    onClick={() => removePosition(type, position)}
+                    onClick={() => removePositionOld(type, position)}
                     className="ml-2 text-red-500 hover:text-red-700"
                   >
                     <Trash2 className="w-3 h-3" />
@@ -1035,7 +1302,7 @@ const DeploymentManagementSystem = () => {
                 className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') {
-                    addPosition(type, e.target.value);
+                    addPositionOld(type, e.target.value);
                     e.target.value = '';
                   }
                 }}
@@ -1043,7 +1310,7 @@ const DeploymentManagementSystem = () => {
               <button
                 onClick={(e) => {
                   const input = e.target.previousElementSibling;
-                  addPosition(type, input.value);
+                  addPositionOld(type, input.value);
                   input.value = '';
                 }}
                 className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
