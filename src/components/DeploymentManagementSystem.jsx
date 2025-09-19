@@ -971,7 +971,7 @@ const DeploymentManagementSystem = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {Array.isArray(currentDeployments) && currentDeployments.map((deployment) => {
+              {Array.isArray(staff) && staff.map((staffMember) => (
                 <tr key={staffMember.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {staffMember.name}
@@ -999,7 +999,6 @@ const DeploymentManagementSystem = () => {
               ))}
             </tbody>
           </table>
-              {Array.isArray(staff) && staff.map((staffMember) => (
       </div>
     </div>
   );
