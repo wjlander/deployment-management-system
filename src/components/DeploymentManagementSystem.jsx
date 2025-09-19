@@ -84,23 +84,29 @@ const DeploymentManagementSystem = () => {
 
   const loadFromSupabase = async () => {
     try {
-      const { data: staffData, error: staffError } = await supabase
-        .from('staff')
-        .select('id, name, is_under_18');
       setSaveStatus('Loading...');
       
       // Load staff
       const { data: staffData, error: staffError } = await supabase
+        .from('staff')
+        .select('id, name, is_under_18');
+      
+      if (staffError) {
+        console.error('Error loading staff:', staffError);
+      } else if (staffData && staffData.length > 0) {
+        const formattedStaff = staffData.map(s => ({
+          id: s.id,
           name: s.name,
           isUnder18: s.is_under_18
-      
-      if (staffData && staffData.length > 0) {
-        })), { onConflict: 'id' });
+        }));
         setStaff(formattedStaff);
       }
 
       // Load positions
-      const { data: deploymentsData, error: deploymentsError } = await supabase
+      const { data: positionsData, error: positionsError } = await supabase
+        .from('positions')
+        .select('name, type');
+      
       if (positionsData && positionsData.length > 0) {
         const groupedPositions = {
           position: [],
@@ -116,10 +122,13 @@ const DeploymentManagementSystem = () => {
         });
         
         setPositions(groupedPositions);
-        .select('id, date, staff_id, start_time, end_time, position, secondary, area, cleaning, break_minutes');
+      }
 
       // Load deployments
-      const { data: deploymentsData } = await supabase.from('deployments').select('*');
+      const { data: deploymentsData, error: deploymentsError } = await supabase
+        .from('deployments')
+        .select('id, date, staff_id, start_time, end_time, position, secondary, area, cleaning, break_minutes');
+
       if (deploymentsData && deploymentsData.length > 0) {
         const groupedDeployments = {};
         deploymentsData.forEach(d => {
@@ -139,10 +148,13 @@ const DeploymentManagementSystem = () => {
           });
         });
         setDeploymentsByDate(groupedDeployments);
-        .select('date, forecast, day_shift_forecast, night_shift_forecast, weather, notes');
+      }
 
       // Load shift info
       const { data: shiftData, error: shiftError } = await supabase
+        .from('shift_info')
+        .select('date, forecast, day_shift_forecast, night_shift_forecast, weather, notes');
+
       if (shiftData && shiftData.length > 0) {
         const groupedShiftInfo = {};
         shiftData.forEach(s => {
@@ -200,13 +212,13 @@ const DeploymentManagementSystem = () => {
       setSaveStatus('Saving...');
       
       // Save staff
-      await supabase.from('staff').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      const staffToSave = staff.map(s => ({
-        id: s.id,
-        name: s.name,
-        is_under_18: s.isUnder18
-      }));
-      await supabase.from('staff').insert(staffToSave);
+      const { error: staffError } = await supabase
+        .from('staff')
+        .upsert(staff.map(s => ({
+          id: s.id,
+          name: s.name,
+          is_under_18: s.isUnder18
+        })), { onConflict: 'id' });
 
       // Save positions
       await supabase.from('positions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
@@ -221,45 +233,37 @@ const DeploymentManagementSystem = () => {
       }
 
       // Save deployments
-      await supabase.from('deployments').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      const deploymentsToSave = [];
-      Object.entries(deploymentsByDate).forEach(([date, deployments]) => {
-        deployments.forEach(d => {
-          deploymentsToSave.push({
       const { error: deploymentsError } = await supabase
-            date,
+        .from('deployments')
         .upsert(currentDeployments.map(d => ({
-            end_time: d.endTime,
-            position: d.position,
-            secondary: d.secondary || '',
-            area: d.area || '',
-            cleaning: d.cleaning || '',
-            break_minutes: d.breakMinutes || 0
-          });
-        });
-      });
+          id: d.id,
+          date: selectedDate,
+          staff_id: d.staffId,
+          start_time: d.startTime,
+          end_time: d.endTime,
+          position: d.position,
+          secondary: d.secondary || '',
+          area: d.area || '',
+          cleaning: d.cleaning || '',
+          break_minutes: d.breakMinutes || 0
         })), { onConflict: 'id' });
-        await supabase.from('deployments').insert(deploymentsToSave);
-      }
 
       // Save shift info
-      await supabase.from('shift_info').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      const shiftInfoToSave = Object.values(shiftInfoByDate).map(s => ({
-        date: s.date,
-        forecast: s.forecast,
-        day_shift_forecast: s.dayShiftForecast,
-        night_shift_forecast: s.nightShiftForecast,
-        weather: s.weather,
       const { error: shiftError } = await supabase
-      }));
+        .from('shift_info')
         .upsert({
-        await supabase.from('shift_info').insert(shiftInfoToSave);
-      }
+          date: currentShiftInfo.date,
+          forecast: currentShiftInfo.forecast,
+          day_shift_forecast: currentShiftInfo.dayShiftForecast,
+          night_shift_forecast: currentShiftInfo.nightShiftForecast,
+          weather: currentShiftInfo.weather,
+          notes: currentShiftInfo.notes
+        }, { onConflict: 'date' });
 
       // Save sales data
       await supabase.from('sales_data').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       await supabase.from('sales_data').insert({
-        }, { onConflict: 'date' });
+        today_data: salesData.todayData,
         last_week_data: salesData.lastWeekData,
         last_year_data: salesData.lastYearData
       });
@@ -456,21 +460,6 @@ const DeploymentManagementSystem = () => {
         ...prev,
         [selectedDate]: deploymentsToCopy
       }));
-
-      // Load staff
-      const { data: staffData, error: staffError } = await supabase
-        .from('staff')
-        .select('id, name, is_under_18');
-      
-      if (staffError) {
-        console.error('Error loading staff:', staffError);
-      } else if (staffData && staffData.length > 0) {
-        const formattedStaff = staffData.map(s => ({
-          id: s.id,
-          name: s.name,
-          isUnder18: s.is_under_18
-        }));
-      }
     }
   };
 
@@ -872,372 +861,4 @@ const DeploymentManagementSystem = () => {
                         <select
                           value={deployment.cleaning}
                           onChange={(e) => updateDeployment(deployment.id, 'cleaning', e.target.value)}
-                          className="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        >
-                          <option value="">None</option>
-                          {positions.cleaning_area.map(area => (
-                            <option key={area} value={area}>{area}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {deployment.breakMinutes}min
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => removeDeployment(deployment.id)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  const renderStaffPage = () => (
-    <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">Staff Management</h2>
-        
-        {/* Add New Staff */}
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Add New Staff Member</h3>
-          <div className="flex flex-wrap items-end gap-4">
-            <div className="flex-1 min-w-48">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-              <input
-                type="text"
-                value={newStaff.name}
-                onChange={(e) => setNewStaff(prev => ({ ...prev, name: e.target.value }))}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter staff name"
-              />
-            </div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="isUnder18"
-                checked={newStaff.isUnder18}
-                onChange={(e) => setNewStaff(prev => ({ ...prev, isUnder18: e.target.checked }))}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <label htmlFor="isUnder18" className="text-sm text-gray-700">Under 18</label>
-            </div>
-            <button
-              onClick={addStaff}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center space-x-2"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add Staff</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Staff List */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {staff.map(staffMember => (
-            <div key={staffMember.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium text-gray-900">{staffMember.name}</h4>
-                  {staffMember.isUnder18 && (
-                    <span className="inline-block bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full mt-1">
-                      Under 18
-                    </span>
-                  )}
-                </div>
-                <button
-                  onClick={() => removeStaff(staffMember.id)}
-                  className="text-red-600 hover:text-red-800"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderPositionsPage = () => {
-    const [newPositionName, setNewPositionName] = useState('');
-    const [selectedPositionType, setSelectedPositionType] = useState('position');
-
-    const positionTypeLabels = {
-      position: 'Primary Positions',
-      pack_position: 'Pack Positions',
-      area: 'Work Areas',
-      cleaning_area: 'Cleaning Areas'
-    };
-
-    const positionTypeColors = {
-      position: 'bg-blue-100 text-blue-800',
-      pack_position: 'bg-green-100 text-green-800',
-      area: 'bg-purple-100 text-purple-800',
-      cleaning_area: 'bg-orange-100 text-orange-800'
-    };
-
-    return (
-      <div className="space-y-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Position Management</h2>
-          
-          {/* Add New Position */}
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Add New Position</h3>
-            <div className="flex flex-wrap items-end gap-4">
-              <div className="flex-1 min-w-48">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Position Name</label>
-                <input
-                  type="text"
-                  value={newPositionName}
-                  onChange={(e) => setNewPositionName(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter position name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                <select
-                  value={selectedPositionType}
-                  onChange={(e) => setSelectedPositionType(e.target.value)}
-                  className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {Object.entries(positionTypeLabels).map(([key, label]) => (
-                    <option key={key} value={key}>{label}</option>
-                  ))}
-                </select>
-              </div>
-              <button
-                onClick={() => {
-                  addPosition(selectedPositionType, newPositionName);
-                  setNewPositionName('');
-                }}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center space-x-2"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add Position</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Position Lists */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {Object.entries(positions).map(([type, positionList]) => (
-              <div key={type} className="border border-gray-200 rounded-lg p-4">
-                <h4 className="font-semibold text-gray-800 mb-3">{positionTypeLabels[type]}</h4>
-                <div className="space-y-2">
-                  {positionList.map(position => (
-                    <div key={position} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${positionTypeColors[type]}`}>
-                        {position}
-                      </span>
-                      <button
-                        onClick={() => removePosition(type, position)}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                  {positionList.length === 0 && (
-                    <p className="text-gray-500 text-sm italic">No positions added yet</p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderSalesPage = () => (
-    <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">Sales Analysis</h2>
-        
-        {/* Data Input */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Today's Data</label>
-            <textarea
-              value={salesData.todayData}
-              onChange={(e) => setSalesData(prev => ({ ...prev, todayData: e.target.value }))}
-              className="w-full h-32 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-              placeholder="Paste today's sales data here..."
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Last Week Data</label>
-            <textarea
-              value={salesData.lastWeekData}
-              onChange={(e) => setSalesData(prev => ({ ...prev, lastWeekData: e.target.value }))}
-              className="w-full h-32 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-              placeholder="Paste last week's sales data here..."
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Last Year Data</label>
-            <textarea
-              value={salesData.lastYearData}
-              onChange={(e) => setSalesData(prev => ({ ...prev, lastYearData: e.target.value }))}
-              className="w-full h-32 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-              placeholder="Paste last year's sales data here..."
-            />
-          </div>
-        </div>
-
-        {/* Analysis Tables */}
-        {(parsedSalesData.today.length > 0 || parsedSalesData.lastWeek.length > 0 || parsedSalesData.lastYear.length > 0) && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {parsedSalesData.today.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">Today</h3>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 text-sm">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Sales</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Trans</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Avg</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {parsedSalesData.today.map((row, index) => (
-                        <tr key={index}>
-                          <td className="px-3 py-2 whitespace-nowrap text-gray-900">{row.time}</td>
-                          <td className="px-3 py-2 whitespace-nowrap text-gray-900">{row.sales}</td>
-                          <td className="px-3 py-2 whitespace-nowrap text-gray-900">{row.transactions}</td>
-                          <td className="px-3 py-2 whitespace-nowrap text-gray-900">{row.average}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {parsedSalesData.lastWeek.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">Last Week</h3>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 text-sm">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Sales</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Trans</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Avg</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {parsedSalesData.lastWeek.map((row, index) => (
-                        <tr key={index}>
-                          <td className="px-3 py-2 whitespace-nowrap text-gray-900">{row.time}</td>
-                          <td className="px-3 py-2 whitespace-nowrap text-gray-900">{row.sales}</td>
-                          <td className="px-3 py-2 whitespace-nowrap text-gray-900">{row.transactions}</td>
-                          <td className="px-3 py-2 whitespace-nowrap text-gray-900">{row.average}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {parsedSalesData.lastYear.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">Last Year</h3>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 text-sm">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Sales</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Trans</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Avg</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {parsedSalesData.lastYear.map((row, index) => (
-                        <tr key={index}>
-                          <td className="px-3 py-2 whitespace-nowrap text-gray-900">{row.time}</td>
-                          <td className="px-3 py-2 whitespace-nowrap text-gray-900">{row.sales}</td>
-                          <td className="px-3 py-2 whitespace-nowrap text-gray-900">{row.transactions}</td>
-                          <td className="px-3 py-2 whitespace-nowrap text-gray-900">{row.average}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="py-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">KFC Deployment Management System</h1>
-          <p className="text-gray-600">Manage staff deployments, positions, and sales analysis</p>
-        </div>
-        
-        {renderNavigation()}
-        
-        {currentPage === 'deployment' && renderDeploymentPage()}
-        {currentPage === 'staff' && renderStaffPage()}
-        {currentPage === 'positions' && renderPositionsPage()}
-        {currentPage === 'sales' && renderSalesPage()}
-      </div>
-
-      {/* New Date Modal */}
-      {showNewDateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-96">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Create New Date</h3>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-              <input
-                type="date"
-                value={newDate}
-                onChange={(e) => setNewDate(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => setShowNewDateModal(false)}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={createNewDate}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-              >
-                Create
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default DeploymentManagementSystem;
+                          className="text-sm border border-gray-300 
