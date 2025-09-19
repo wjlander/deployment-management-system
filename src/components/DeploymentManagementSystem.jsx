@@ -227,7 +227,7 @@ const DeploymentManagementSystem = () => {
       // Save positions within areas
       Object.entries(positions.areas).forEach(([areaName, positionList]) => {
         positionList.forEach(positionName => {
-          positionsToSave.push({ name: positionName, type: 'position', area_name: areaName });
+          positionsToSave.push({ name: positionName, type: 'position' });
         });
       });
       
